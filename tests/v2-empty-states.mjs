@@ -19,7 +19,7 @@ async function scenario(role,width) {
   const context=user.id+"/"+workspace.id;
   const wonId=randomUUID(), nextCursor=randomUUID(), pipelineId=randomUUID();
   const state={line:null,conversations:[],wins:true,pipeline:false,loggedIn:true};
-  const web=await startFixtureWeb(bundle,0,(req,res,path)=>{
+  const web=await startFixtureWeb(bundle,0,async (req,res,path)=>{
     if(path==="session" && !state.loggedIn) return json(res,401,{});
     if(path==="session") return json(res,200,{user,workspace,workspaces:[workspace]});
     if(req.headers["x-v2-context"]!==context) return json(res,403,{});
@@ -28,6 +28,7 @@ async function scenario(role,width) {
         {items:[{id:wonId,title:"Venda anterior",summary:"Confirmada",priority:"low",
           outcome:{status:"won",amountCents:"28000",confirmedAt:"2026-11-18T12:00:00Z"}}],nextCursor});
     if(path==="conversations") {
+      if (state.delayList) await state.delayList;
       const params=new URL(req.url,"http://localhost").searchParams;
       const rows=state.conversations.filter(item=>!params.get("q") || item.title.toLowerCase().includes(params.get("q").toLowerCase()));
       return json(res,200,{items:rows,nextCursor:null});
@@ -87,17 +88,15 @@ async function scenario(role,width) {
     await page.getByText("Nenhuma oportunidade neste recorte",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Limpar filtros"}).click();
     await page.getByText("Ainda não há oportunidades analisadas",{exact:true}).waitFor();
-    const conversationList="**/api/v2/conversations?*";
     let release;
-    const gate=new Promise(resolve=>{release=resolve;});
-    await page.route(conversationList,async route=>{await gate;await route.continue();});
+    state.delayList=new Promise(resolve=>{release=resolve;});
     try {
       const request=page.waitForRequest(req=>req.url().includes("/api/v2/conversations?"));
       await page.goto(web.origin+"/#entrada");
       await request;
       await page.getByText("Carregando…",{exact:true}).first().waitFor();
       assert.equal(await page.locator('[data-preview="inbox"]').count(),0);
-    } finally {release();await page.unroute(conversationList);}
+    } finally {release();state.delayList=null;}
     await open("entrada","Toda conversa começa com uma conexão");
     await page.locator('[data-preview="inbox"]').waitFor();
     const panel=page.getByRole("region",{name:"Toda conversa começa com uma conexão"});
