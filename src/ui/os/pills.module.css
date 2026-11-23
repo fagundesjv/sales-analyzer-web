@@ -1,0 +1,72 @@
+/*
+ * A row of pills to choose one view of a list: its shelves, its families, its situations. The
+ * chosen one is filled; the others are plain words. New in this project; it goes to the Design
+ * System after the interface is approved.
+ */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  font: var(--t-body);
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--dur-1) var(--ease-out),
+    background var(--dur-1) var(--ease-out);
+}
+
+.pills[data-size="sm"] .pill {
+  height: 27px;
+  padding: 0 var(--s-2);
+  font: var(--t-small);
+}
+
+.pill:hover {
+  color: var(--ink);
+}
+
+.pill[aria-pressed="true"] {
+  background: var(--g-100);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.pill:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset-inset);
+}
+
+.count {
+  font: var(--t-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--subtle);
+}
+
+.pill[aria-pressed="true"] .count {
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill {
+    transition: none;
+  }
+}
+
+@media (pointer: coarse), (max-width: 640px) {
+  .pills .pill, .pills[data-size="sm"] .pill { min-height: 44px; }
+}

@@ -1,0 +1,53 @@
+.toolbar,
+.stageActions,
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--s-2);
+}
+.form,
+.stages,
+.form label,
+.toolbar label {
+  display: grid;
+  min-width: 0;
+  gap: var(--s-2);
+}
+.form,
+.stages {
+  gap: var(--s-3);
+}
+.form select,
+.toolbar select {
+  max-width: 100%;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: var(--s-2) var(--s-3);
+  font: inherit;
+}
+.stageRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--s-2);
+}
+.pagination {
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--s-3);
+}
+.error {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .board.board {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: visible;
+  }
+  .stageRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

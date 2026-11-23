@@ -1,0 +1,23 @@
+.panel {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 50%;
+  overflow: auto;
+  display: grid;
+  gap: var(--s-2);
+  padding: var(--s-3) clamp(12px, 2vw, 24px);
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+}
+.bar, .channel, .actions, .strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.bar, .strip { justify-content: space-between; }
+.strip { width: 100%; }
+.channel { font: var(--t-small-strong); color: var(--ink); }
+.panel p, .strip { margin: 0; font: var(--t-small); color: var(--muted); }
+.panel p[role="alert"] { color: var(--red-ink); }
+.strip span { overflow-wrap: anywhere; }

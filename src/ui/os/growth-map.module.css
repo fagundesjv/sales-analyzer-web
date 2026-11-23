@@ -1,0 +1,101 @@
+/*
+ * How something grew over the last weeks: one small square for each day, darker where more
+ * happened. Weeks run across, the days of the week run down. New in this project; it goes to
+ * the Design System after the interface is approved.
+ */
+.map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+  container-type: inline-size;
+}
+
+/* The first column holds the names of the days; each of the others is one week. */
+.grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: 16px repeat(7, 16px);
+  grid-template-columns: max-content;
+  grid-auto-columns: 16px;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.month {
+  grid-row: 1;
+  overflow: visible;
+  font: var(--t-caption);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.weekday {
+  padding-right: var(--s-1);
+  font: var(--t-caption);
+  line-height: 16px;
+  color: var(--muted);
+}
+
+.day {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--r-xs);
+  background: var(--g-75);
+}
+
+/* With little room, only the newest weeks: the older ones give way instead of being cut. */
+@container (max-width: 460px) {
+  .grid > [data-far] {
+    display: none;
+  }
+}
+
+.day[data-level="1"] {
+  background: var(--g-300);
+}
+
+.day[data-level="2"] {
+  background: var(--g-500);
+}
+
+.day[data-level="3"] {
+  background: var(--g-700);
+}
+
+.day[data-level="4"] {
+  background: var(--g-900);
+}
+
+.day[data-ahead] {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  font: var(--t-small);
+  color: var(--muted);
+}
+
+.total {
+  font: var(--t-body-strong);
+  color: var(--ink);
+}
+
+.scale {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.scale .day {
+  width: 10px;
+  height: 10px;
+}

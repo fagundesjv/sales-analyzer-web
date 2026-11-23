@@ -1,0 +1,459 @@
+/*
+ * The turns of the chat. What the person asked is a bubble at the end of the line. What the AI
+ * answered is a card: above it one line says how the work went and opens its steps, inside it
+ * the answer, at its foot the few things to do with it. New in this project; it goes to the
+ * Design System after the interface is approved.
+ */
+/* What is said in the conversation comes in softly, the request and the answer alike. */
+.ask,
+.answer {
+  animation: turn-in var(--dur-2) var(--ease-out) backwards;
+}
+
+@keyframes turn-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.ask {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.bubble {
+  max-width: min(85%, 640px);
+  margin: 0;
+  padding: 9px var(--s-4);
+  border-radius: 18px;
+  background: var(--g-100);
+  font: 400 14px / 22px var(--font);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.askAttached {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: 85%;
+}
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+/* ——— The line of the work ——— */
+.activity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.line {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--s-2);
+  max-width: 100%;
+  min-height: 28px;
+  padding: 0 var(--s-2) 0 2px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  font: var(--t-body);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out);
+}
+
+.line:hover {
+  background: var(--paper-hover);
+}
+
+.line:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+}
+
+.line[data-plain] {
+  cursor: default;
+}
+
+.line[data-plain]:hover {
+  background: none;
+}
+
+.state {
+  flex: none;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  color: var(--green-dot);
+  stroke-width: var(--icon-stroke);
+}
+
+.state[data-working] {
+  color: var(--icon-rest);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+.summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* While the AI works the phrase shimmers, as a live line does, and each new one fades in. */
+.summary[data-working] {
+  background: linear-gradient(90deg, var(--muted) 0%, var(--ink) 50%, var(--muted) 100%);
+  background-size: 200% 100%;
+  background-clip: text;
+  color: transparent;
+  animation:
+    shimmer 2.4s linear infinite,
+    phrase-in var(--dur-2) var(--ease-out);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes phrase-in {
+  from {
+    opacity: 0;
+    translate: 0 2px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.elapsed {
+  flex: none;
+  font: var(--t-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary[data-working] {
+    background: none;
+    color: var(--muted);
+    animation: none;
+  }
+}
+
+.chevron {
+  flex: none;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--icon-quiet);
+  transition: rotate var(--dur-2) var(--ease-out);
+}
+
+.line[aria-expanded="true"] .chevron {
+  rotate: 90deg;
+}
+
+/* The room of the steps: closed it has no height, and it opens and closes little by little. */
+.reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition:
+    grid-template-rows var(--dur-2) var(--ease-move),
+    visibility 0s linear var(--dur-2);
+}
+
+.reveal[data-open] {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition: grid-template-rows var(--dur-2) var(--ease-move);
+}
+
+.revealed {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 var(--s-1);
+  padding: 0 0 0 var(--s-1);
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: 3px 0;
+  font: var(--t-body);
+  color: var(--text);
+}
+
+.step[data-state="upcoming"] {
+  color: var(--subtle);
+}
+
+.stepMark {
+  flex: none;
+  align-self: center;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--icon-quiet);
+  stroke-width: var(--icon-stroke);
+}
+
+.step[data-state="done"] .stepMark {
+  color: var(--green-dot);
+}
+
+.step[data-state="current"] .stepMark {
+  animation: spin 0.9s linear infinite;
+}
+
+.stepLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.stepDetail {
+  flex: none;
+  max-width: 55%;
+  overflow: hidden;
+  font: var(--t-small);
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ——— The card of the answer ——— */
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--paper);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+  padding: var(--s-4) var(--s-5);
+  font: 400 14px / 22px var(--font);
+  color: var(--ink);
+}
+
+.text {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: 40px;
+  padding: 0 var(--s-3);
+  border-top: 1px solid var(--line-soft);
+}
+
+.meta {
+  margin-left: auto;
+  padding-right: var(--s-2);
+  font: var(--t-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--subtle);
+}
+
+/* What can be asked next, under the card. */
+/* What became of a change, under its card, with the way back at the end of the line. */
+.change {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: var(--s-1) var(--s-2) var(--s-1) var(--s-3);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+  font: var(--t-small);
+  color: var(--muted);
+}
+
+.changeIcon {
+  flex: none;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--icon-rest);
+  stroke-width: var(--icon-stroke);
+}
+
+.changeText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* A content the AI made: its miniature as it goes out, its name, and the whole card opens it. */
+.made {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+  min-width: 0;
+  padding: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--paper);
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out);
+}
+
+.made:hover {
+  border-color: var(--line-hover);
+  background: var(--g-25);
+}
+
+.made:has(.madeOpen:focus-visible) {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+}
+
+.madeText {
+  display: flex;
+  flex: 1 1 140px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.madeOpen {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: var(--t-body-strong);
+  color: var(--ink);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.madeOpen::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+}
+
+.madeOpen:focus-visible {
+  outline: none;
+}
+
+.madeName {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.madeMeta {
+  font: var(--t-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.madeActions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-inline-start: auto;
+}
+
+/* The next requests: one line that rolls sideways and fades at its end. */
+.next {
+  display: flex;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: 2px 2px var(--s-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, var(--ink) calc(100% - 40px), transparent);
+}
+
+.next::-webkit-scrollbar {
+  display: none;
+}
+
+.next > * {
+  flex: none;
+}
+
+@media (max-width: 640px) {
+  .body {
+    padding: var(--s-3) var(--s-4);
+  }
+
+  .stepDetail {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ask,
+  .answer {
+    animation: none;
+  }
+
+  .reveal,
+  .reveal[data-open] {
+    transition: none;
+  }
+
+  .line,
+  .chevron {
+    transition: none;
+  }
+
+  .state[data-working],
+  .step[data-state="current"] .stepMark {
+    animation-duration: 2.4s;
+  }
+}

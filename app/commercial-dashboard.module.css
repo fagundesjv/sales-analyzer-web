@@ -1,0 +1,319 @@
+.dashboard {
+  margin-inline: auto;
+  display: grid;
+  gap: var(--sales-section);
+  min-width: 0;
+  color: var(--ink);
+  container-type: inline-size;
+}
+.version, .filters, .filterFields {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.version > span { font: var(--t-small); color: var(--muted); }
+.filters { justify-content: space-between; }
+@media (max-width: 640px) {
+  .version [role="radio"] { min-height: 44px; }
+  .filterFields { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filterFields select { min-width: 0; width: 100%; min-height: 44px; }
+}
+.header,
+.sectionHead,
+.actions,
+.pager,
+.sectionHead h2,
+.context,
+.footer a,
+.dashboard section footer a,
+.inbox a:not(.row) {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.header,
+.sectionHead {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.header {
+  align-items: flex-end;
+  gap: var(--s-4);
+}
+.header h1 {
+  margin: 4px 0 0;
+  font: var(--t-page);
+  font-size: clamp(28px, 3.1cqw, 43px);
+  line-height: 1.08;
+  letter-spacing: -0.055em;
+}
+.context,
+.label,
+.delay,
+.pager small,
+.empty {
+  font: var(--t-small);
+  color: var(--muted);
+}
+.context i {
+  height: 6px;
+  width: 6px;
+  border-radius: 50%;
+  background: var(--teal-dot);
+}
+.spread,
+.lower {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: clamp(18px, 2.4cqw, 38px);
+  align-items: start;
+}
+.spread {
+  padding-block: var(--s-5);
+  border-block: 1px solid var(--line);
+}
+.overview {
+  display: grid;
+  gap: var(--s-4);
+  min-width: 0;
+}
+.overview > section {
+  box-shadow: none;
+}
+.summary strong {
+  display: block;
+  margin: 4px 0;
+  font: 560 clamp(40px, 5.7cqw, 75px) / 1 var(--font);
+  letter-spacing: -0.068em;
+  font-variant-numeric: tabular-nums;
+}
+.summary p {
+  font: var(--t-small);
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+.story,
+.quiet,
+.inbox {
+  min-width: 0;
+}
+.story {
+  padding-right: clamp(15px, 2cqw, 30px);
+  border-right: 1px solid var(--line);
+}
+.sectionHead {
+  margin-bottom: var(--s-3);
+  gap: var(--s-2);
+}
+.sectionHead h2,
+.quiet h2 {
+  font: var(--t-body-strong);
+  color: var(--ink);
+  margin: 0;
+}
+.sectionHead h2 svg {
+  color: var(--icon-rest);
+}
+.cover {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  aspect-ratio: 2.38;
+  border-radius: var(--r-lg);
+  background: var(--paper-sunken);
+}
+.cover > span:last-child {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  border-radius: var(--r-full);
+  padding: 4px 9px;
+  background: #171715d9;
+  color: white;
+  font: var(--t-small);
+  pointer-events: none;
+}
+.actions {
+  flex-wrap: wrap;
+}
+.pager {
+  gap: 5px;
+}
+.pager button {
+  min-width: 31px;
+  min-height: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+}
+.pager button:hover:not(:disabled) {
+  background: var(--paper-hover);
+  color: var(--ink);
+}
+.pager button:disabled {
+  opacity: 0.35;
+}
+.footer {
+  border-top: 1px solid var(--line-soft);
+  padding-top: var(--s-3);
+  margin-top: var(--s-3);
+}
+.footer a,
+.inbox a:not(.row),
+.dashboard section footer a {
+  width: fit-content;
+  color: var(--text);
+  font: var(--t-small-strong);
+  text-decoration: none;
+}
+.dashboard a:hover {
+  color: var(--ink);
+}
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) 2px;
+  text-decoration: none;
+  border-top: 1px solid var(--line-soft);
+  color: var(--ink);
+}
+.row b,
+.row small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row b {
+  font: var(--t-body-strong);
+}
+.row small {
+  font: var(--t-small);
+  color: var(--muted);
+}
+.row > svg {
+  color: var(--subtle);
+}
+.channelIcon {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border-radius: var(--r-md);
+  background: var(--paper-sunken);
+  color: var(--text);
+}
+.row,
+.pager button {
+  transition:
+    background-color var(--dur-2) var(--ease-out),
+    color var(--dur-2) var(--ease-out);
+}
+.row:hover {
+  background: var(--paper-hover);
+}
+@container (max-width: 780px) {
+  .spread,
+  .lower {
+    grid-template-columns: 1fr;
+  }
+  .story {
+    padding-right: 0;
+    border-right: none;
+  }
+  .cover {
+    aspect-ratio: 2.6;
+  }
+  .header {
+    align-items: flex-start;
+    gap: var(--s-3);
+  }
+  .spread {
+    padding-block: var(--s-4);
+  }
+  .overview {
+    gap: var(--s-3);
+  }
+}
+@container (max-width: 440px) {
+  .header > div:last-child {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .actions {
+    gap: 4px;
+  }
+  .summary strong {
+    font-size: 45px;
+  }
+  .cover {
+    aspect-ratio: 2.1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row,
+  .pager button {
+    transition: none;
+  }
+}
+
+@container (max-width: 620px) {
+  .overview {
+    display: contents;
+  }
+  .summary {
+    order: 1;
+  }
+  .story,
+  .quiet {
+    order: 0;
+  }
+  .overview > section {
+    order: 2;
+  }
+  .story {
+    border-block: 1px solid var(--line-soft);
+    padding-block: var(--s-3);
+  }
+  .story article[data-variant="lead"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(72px, 22cqw, 112px);
+    gap: var(--s-3);
+  }
+  .story article[data-variant="lead"] > div:first-child {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .story article[data-variant="lead"] > div:nth-child(2) {
+    grid-column: 1;
+    grid-row: 1;
+    padding: 0;
+  }
+  .story article[data-variant="lead"] h3 {
+    font: var(--t-title-3);
+    letter-spacing: var(--track-tight);
+  }
+  .cover {
+    aspect-ratio: 0.82;
+  }
+  .cover > span:last-child {
+    bottom: 4px;
+    left: 4px;
+    max-width: calc(100% - 8px);
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+    padding: 2px 5px;
+  }
+}
+
+@media (pointer: coarse), (max-width: 700px) { .pager button { min-width: 40px; min-height: 40px; } .actions :is(a,button) { min-height: 42px; } }

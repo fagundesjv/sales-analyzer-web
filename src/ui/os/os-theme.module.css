@@ -1,0 +1,241 @@
+/*
+ * The look of the Content OS on top of the Design System tokens: a calm, neutral interface in
+ * white (in the dark look, a neutral graphite), where the ink itself is the action colour
+ * and blue is kept for the few marks that carry meaning (where one is, what the AI proposes). The
+ * Design System paints its accent with the blue ramp; here that ramp points at the neutral one,
+ * and the blue is kept aside first.
+ * New in this project; it goes to the Design System after the interface is approved.
+ */
+
+/* Outside: the blue of the brand is put aside before the ramp turns neutral. */
+.brand {
+  --brand-25: var(--b-25);
+  --brand-50: var(--b-50);
+  --brand-100: var(--b-100);
+  --brand-200: var(--b-200);
+  --brand-400: var(--b-400);
+  --brand-500: var(--b-500);
+  --brand-600: var(--b-600);
+  --brand-700: var(--b-700);
+}
+
+/* The dark canvas is pure black. Elevation comes from neutral gray surfaces and borders. */
+.brand[data-color-scheme="dark"] {
+  --night: #000;
+  background: var(--night);
+}
+
+/* Inside: every piece of the Design System reads the same tokens, now neutral. */
+.mono.mono {
+  --b-25: var(--g-25);
+  --b-50: var(--g-50);
+  --b-100: var(--g-100);
+  --b-200: var(--g-200);
+  --b-300: var(--g-400);
+  --b-400: var(--g-500);
+  --b-500: var(--g-700);
+  --b-600: var(--g-900);
+  --b-700: var(--g-800);
+  --b-800: var(--g-950);
+  --b-900: var(--g-950);
+
+  /* Text that reads at 4.5:1 or more on the paper and on its quiet grounds and hovers: muted a
+     step down the ramp (6.1:1 on white), subtle between the two middle greys (5.2:1; the Design
+     System's own was 2.6:1). What is disabled keeps the old light grey, so it still looks off. */
+  --muted: var(--g-600);
+  --subtle: color-mix(in srgb, var(--g-500) 45%, var(--g-600));
+  --disabled-ink: var(--g-400);
+
+  /* What is chosen is outlined in ink, on the same paper. */
+  --select-bg: var(--g-25);
+  --select-line: var(--g-900);
+  --choice-hover-line: var(--g-300);
+  --ring-field: 0 0 0 3px color-mix(in srgb, var(--g-900) 8%, transparent);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--g-900) 12%, transparent);
+
+  /* Blue stays where it means something: where one is, and what the AI proposes. */
+  --nav-active-bar: var(--brand-600);
+  --diff-insert-bg: var(--brand-50);
+  --diff-insert-line: var(--brand-400);
+
+  /*
+   * The colour that darkens, in both looks: shadows, the back of a folder, a label laid over a
+   * picture. In the light it is the ink; in the dark the ink is light, so it is the night itself.
+   */
+  --shade: var(--ink);
+  --on-shade: var(--paper);
+
+  /* The page: a larger title and wider margins. */
+  --t-page: 600 26px / 34px var(--font);
+  --page-gutter: 40px;
+}
+
+/*
+ * The dark look, drawn as its own system and not as the light one turned over. One night (the
+ * darkest ground of the Design System without its blue, taken above) and white laid over it in
+ * fine steps: the higher a surface sits, the lighter it is (canvas, column, paper, a hover, a
+ * menu), so depth reads without shadows, which do not show on dark. Lines are hairlines a few
+ * steps above the paper. Text has three levels and never reaches pure white, so a long read does
+ * not glare. The ink, now light, is still the action colour: a light key with dark letters. Blue
+ * still marks only where one is and what the AI proposes, a step brighter so it carries on the
+ * dark. One step more specific than the light block, so it wins whatever order the stylesheets
+ * load in.
+ */
+.mono.mono[data-color-scheme="dark"] {
+  /* The ramp: white over the night, in steps the eye can tell apart (the Design System's dark
+     ramp repeats greys, so a hover and a quiet ground were the same colour). The quiet grounds
+     (a table's head, the days outside the month, a stage) sit below the paper, as they do in the
+     light; hovers and fills rise above it. */
+  --g-950: #fff;
+  --g-50: color-mix(in srgb, var(--g-950) 1%, var(--night));
+  --g-25: color-mix(in srgb, var(--g-950) 2%, var(--night));
+  --g-0: color-mix(in srgb, var(--g-950) 4%, var(--night));
+  --g-75: color-mix(in srgb, var(--g-950) 8%, var(--night));
+  --g-100: color-mix(in srgb, var(--g-950) 10%, var(--night));
+  --g-150: color-mix(in srgb, var(--g-950) 12.5%, var(--night));
+  --g-200: color-mix(in srgb, var(--g-950) 17%, var(--night));
+  --g-300: color-mix(in srgb, var(--g-950) 26%, var(--night));
+  --g-400: color-mix(in srgb, var(--g-950) 54%, var(--night));
+  --g-500: color-mix(in srgb, var(--g-950) 60%, var(--night));
+  --g-600: color-mix(in srgb, var(--g-950) 62%, var(--night));
+  --g-700: color-mix(in srgb, var(--g-950) 72%, var(--night));
+  --g-800: color-mix(in srgb, var(--g-950) 79%, var(--night));
+  --g-900: color-mix(in srgb, var(--g-950) 86%, var(--night));
+
+  /* Surfaces. */
+  --canvas: var(--night);
+  --paper: var(--night);
+  --paper-sunken: var(--g-0);
+  --paper-hover: color-mix(in srgb, var(--g-950) 6%, var(--night));
+  --paper-pressed: var(--g-100);
+  --skeleton: var(--g-75);
+  --overlay: color-mix(in srgb, var(--night) 72%, transparent);
+
+  /* Hairlines. */
+  --line-soft: color-mix(in srgb, var(--g-950) 7%, var(--night));
+  --line: color-mix(in srgb, var(--g-950) 9.5%, var(--night));
+  --line-strong: color-mix(in srgb, var(--g-950) 15%, var(--night));
+  --line-hover: color-mix(in srgb, var(--g-950) 18%, var(--night));
+
+  /* Text: ink for titles and what one acts on, text for reading, muted and subtle for the rest.
+     All in greys and all at least 4.5:1 on the paper and on its hovers: titles 13:1, reading 9:1,
+     muted 6.7:1, subtle 5.5:1, enough to read long without the glare of white on black. */
+  --ink: var(--g-900);
+  --text: var(--g-700);
+  --muted: var(--g-500);
+  --subtle: var(--g-400);
+  --disabled-bg: var(--g-75);
+  --disabled-ink: var(--g-300);
+  --disabled-icon: var(--g-300);
+
+  /* The action: a key of light grey with dark letters, never white, a step below the titles so
+     it does not glare; hover lightens it and press dims it, as every hover lightens here. Its
+     soft steps are the ramp's own, and the chosen thing is outlined a little below the ink. */
+  --b-600: color-mix(in srgb, var(--g-950) 78%, var(--night));
+  --b-700: color-mix(in srgb, var(--g-950) 84%, var(--night));
+  --b-25: color-mix(in srgb, var(--g-950) 5%, var(--night));
+  --b-50: color-mix(in srgb, var(--g-950) 7%, var(--night));
+  --b-800: color-mix(in srgb, var(--g-950) 70%, var(--night));
+  --b-900: color-mix(in srgb, var(--g-950) 70%, var(--night));
+  --on-accent: var(--night);
+  --accent-ink: var(--g-800);
+  --select-ink: var(--g-800);
+  --blue-ink: var(--g-800);
+  --select-bg: var(--b-25);
+  --select-line: var(--g-600);
+
+  /* Red reads a step brighter on the dark, and its hover lightens as every hover does here. */
+  --danger: var(--red-dot);
+  --danger-hover: color-mix(in srgb, var(--red-dot) 88%, var(--g-950));
+  --danger-pressed: color-mix(in srgb, var(--red-dot) 80%, var(--g-950));
+
+  /* Blue, the brighter steps of the brand: its 600 reads 3.9:1 on the paper, its 500 5.3:1. */
+  --brand-600: var(--brand-500);
+  /* Its soft steps laid over this paper, not over the navy one of the Design System, and thinner:
+     blue over black reads as navy as soon as it covers a surface. */
+  --brand-25: color-mix(in srgb, var(--brand-500) 5%, var(--paper));
+  --brand-50: color-mix(in srgb, var(--brand-500) 8%, var(--paper));
+  --brand-100: color-mix(in srgb, var(--brand-500) 14%, var(--paper));
+  --brand-200: color-mix(in srgb, var(--brand-500) 30%, var(--paper));
+  --nav-active-bar: var(--brand-400);
+  --diff-insert-bg: color-mix(in srgb, var(--brand-500) 16%, var(--paper));
+
+  /* Scroll bars thin and in the ramp's own grey, instead of the system's. */
+  scrollbar-color: var(--g-200) transparent;
+
+  /* Shadows are the night under a surface; borders and steps of light do the rest. */
+  --shade: var(--night);
+  --on-shade: var(--ink);
+  --shadow-xs: 0 1px 2px color-mix(in srgb, var(--night) 40%, transparent);
+  --shadow-sm: 0 1px 2px color-mix(in srgb, var(--night) 50%, transparent);
+  --shadow-md:
+    0 4px 12px -2px color-mix(in srgb, var(--night) 55%, transparent),
+    0 2px 4px -2px color-mix(in srgb, var(--night) 40%, transparent);
+  --shadow-lg:
+    0 12px 28px -8px color-mix(in srgb, var(--night) 70%, transparent),
+    0 4px 8px -4px color-mix(in srgb, var(--night) 45%, transparent);
+  --shadow-xl:
+    0 24px 56px -16px color-mix(in srgb, var(--night) 80%, transparent),
+    0 8px 16px -8px color-mix(in srgb, var(--night) 50%, transparent);
+  --shadow-drag:
+    0 16px 32px -12px color-mix(in srgb, var(--night) 80%, transparent),
+    0 4px 8px -4px color-mix(in srgb, var(--night) 50%, transparent);
+}
+
+/*
+ * What floats over the page (menus, lists of choices, dialogs, tooltips) sits a step higher, so
+ * it stands off the page by its own light instead of by a shadow; its hovers and lines go up with
+ * it.
+ */
+.mono.mono[data-color-scheme="dark"]
+  :global(
+    :is(
+      [role="menu"],
+      [role="listbox"],
+      [role="dialog"],
+      [role="alertdialog"],
+      [role="tooltip"],
+      dialog
+    )
+  ) {
+  --paper: color-mix(in srgb, var(--g-950) 7%, var(--night));
+  --paper-hover: color-mix(in srgb, var(--g-950) 11%, var(--night));
+  --g-50: color-mix(in srgb, var(--g-950) 4%, var(--night));
+  --g-75: color-mix(in srgb, var(--g-950) 11%, var(--night));
+  --g-100: color-mix(in srgb, var(--g-950) 13.5%, var(--night));
+  --line-soft: color-mix(in srgb, var(--g-950) 10%, var(--night));
+  --line: color-mix(in srgb, var(--g-950) 12.5%, var(--night));
+}
+
+/*
+ * The sticky head of a group of a Design System list paints its ground in fixed white, which on the
+ * dark is a white band. Found by its structure (a list item whose list is labelled by the head),
+ * as the classes of the Design System are not public. Goes back to the Design System with the rest.
+ */
+.mono.mono[data-color-scheme="dark"]
+  :global(li:has(> ul[aria-labelledby][data-dividers]) > div[id]) {
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+}
+
+/*
+ * The chosen day of a Design System date picker marks what it holds with dots in fixed white, over
+ * the light key; they take the key's letters. Found by its data attribute; goes back with the rest.
+ */
+.mono.mono[data-color-scheme="dark"] :global([data-filled] > span[aria-hidden="true"] > i) {
+  background: color-mix(in srgb, var(--on-accent) 85%, transparent);
+}
+
+/* A red key keeps white letters: on red they read better than the dark ones of the light key. */
+.mono.mono[data-color-scheme="dark"] :global(:is(button, a)[data-variant="danger"]) {
+  --on-accent: var(--g-950);
+}
+
+/*
+ * One piece of the Design System writes its check in white over the action colour (the menu of
+ * columns of a table); on the light key it would vanish, so it takes the key's letters. It goes
+ * back to the Design System with the rest: the piece should read `--on-accent`.
+ */
+.mono.mono[data-color-scheme="dark"]
+  :global([role="menuitemcheckbox"][aria-checked="true"] > [aria-hidden="true"]) {
+  color: var(--on-accent);
+}

@@ -1,0 +1,29 @@
+name: sales-analyzer-v2-web
+services:
+  web:
+    image: ${SA_WEB_IMAGE:-sales-analyzer-web:v2-private}
+    platform: linux/amd64
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    mem_limit: 128m
+    pids_limit: 64
+    environment:
+      SALES_WEB_PUBLIC_PORT: ${SA_WEB_PUBLIC_PORT:-4319}
+      SA_WEB_ORIGIN: ${SA_WEB_ORIGIN:-}
+      SA_API_URL: ${SA_API_URL:?Informe a URL privada da API V2}
+      SA_SERVICE_KEY: ${SA_SERVICE_KEY:?Informe a chave exclusiva do BFF V2}
+    ports:
+      - "127.0.0.1:${SA_WEB_BIND_PORT:-${SA_WEB_PUBLIC_PORT:-4319}}:4319"
+    networks: [bff]
+    healthcheck:
+      test: ["CMD","node","-e","const origin=process.env.SA_WEB_ORIGIN||'http://127.0.0.1:'+process.env.SALES_WEB_PUBLIC_PORT;require('http').get({hostname:'127.0.0.1',port:4319,path:'/healthz',headers:{Host:new URL(origin).host}},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      timeout: 4s
+      interval: 20s
+      start_period: 5s
+networks:
+  bff:
+    external: true
+    name: ${SA_BFF_NETWORK:?Informe o nome da rede privada do BFF V2}

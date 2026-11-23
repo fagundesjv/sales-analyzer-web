@@ -1,0 +1,58 @@
+/*
+ * The name of what is open, in the bar at the top, with its menu. New in this project; it goes
+ * to the Design System after the interface is approved.
+ */
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: min(46vw, 520px);
+  height: 28px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  font: 600 13px / 20px var(--font);
+  letter-spacing: var(--track-tight);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out);
+}
+
+.title:hover,
+.title[aria-expanded="true"] {
+  background: var(--g-100);
+}
+
+.title:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title svg {
+  flex: none;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--icon-rest);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title {
+    transition: none;
+  }
+}

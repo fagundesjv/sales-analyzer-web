@@ -1,0 +1,44 @@
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+/*
+ * The parts the browser paints itself (scroll bars, the ground past the end of the page) follow
+ * the look the page is in, also when the person changes it without reloading. The sheet made to
+ * print stays light in both looks, and so do they around it.
+ */
+html:has(> body > [data-color-scheme="dark"]):not(:has([data-print-sheet])) {
+  color-scheme: dark;
+}
+
+html:has([data-print-sheet]) {
+  color-scheme: light;
+}
+
+/*
+ * A change of the screen made as one movement (see `src/ui/motion.ts`): the request box travels
+ * from where it was to where it is, and the rest of the screen fades over. Less motion asked
+ * for, no motion.
+ */
+::view-transition-group(os-composer) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+}

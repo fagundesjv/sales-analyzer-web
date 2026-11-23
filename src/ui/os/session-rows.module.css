@@ -1,0 +1,158 @@
+/*
+ * The conversations in a narrow column: a line for each, the title and the time, by day. The
+ * menu of a line takes the place of its time while the line is pointed at. New in this project;
+ * it goes to the Design System later.
+ */
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+  padding: var(--s-1) var(--s-3) var(--s-4);
+}
+
+/* With no conversation, what says so sits where the first line would, at the same edge. */
+.empty {
+  padding: var(--s-3) calc(var(--s-3) + 10px) var(--s-4);
+}
+
+.group {
+  margin: 0;
+  padding: var(--s-2) 10px 6px;
+  font: 600 10.5px / 14px var(--font);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border-radius: var(--r-md);
+  transition: background-color var(--dur-1) var(--ease-out);
+}
+
+.item:hover,
+.item:focus-within {
+  background: var(--paper-hover);
+}
+
+.item[data-selected] {
+  background: var(--g-100);
+}
+
+/* The open conversation carries a mark on its edge, so it is found without reading. */
+.item[data-selected]::before {
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  width: 3px;
+  height: 16px;
+  border-radius: var(--r-full);
+  background: var(--nav-active-bar);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.link {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: var(--r-md);
+  color: var(--text);
+  text-decoration: none;
+  outline: none;
+}
+
+.link:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: -2px;
+}
+
+.pin {
+  flex: none;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--icon-rest);
+}
+
+.title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font: var(--t-body);
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item[data-selected] .title {
+  font: var(--t-body-strong);
+  color: var(--ink);
+}
+
+.meta {
+  flex: none;
+  font: var(--t-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.actions {
+  position: absolute;
+  top: 50%;
+  right: var(--s-1);
+  display: flex;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity var(--dur-1) var(--ease-out);
+}
+
+/* Pointed at, with the focus inside or with its menu open: the menu shows and the time gives way. */
+.item:hover .actions,
+.item:focus-within .actions,
+.actions:has([aria-expanded="true"]) {
+  opacity: 1;
+}
+
+/* Only where there is a pointer; never forced back to visible, so a hidden region hides it too. */
+@media (hover: hover) {
+  .item[data-actions]:hover .meta,
+  .item[data-actions]:focus-within .meta,
+  .item[data-actions]:has([aria-expanded="true"]) .meta {
+    visibility: hidden;
+  }
+}
+
+/* Without a pointer nothing is pointed at: the time stays and the menu lives in the title. */
+@media (hover: none) {
+  .actions {
+    display: none;
+  }
+
+  .link {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .actions {
+    transition: none;
+  }
+}

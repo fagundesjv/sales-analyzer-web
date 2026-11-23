@@ -1,0 +1,48 @@
+/*
+ * What stands above a list: the search at the start, the few controls at the end, and under it
+ * the pills that cut the list. New in this project; it goes to the Design System after the
+ * interface is approved.
+ */
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+}
+
+.search {
+  flex: 0 1 300px;
+  min-width: 200px;
+}
+
+.end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-left: auto;
+}
+
+.cuts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .search {
+    flex-basis: 100%;
+  }
+
+  .end {
+    margin-left: 0;
+  }
+}

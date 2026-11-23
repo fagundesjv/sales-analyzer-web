@@ -1,0 +1,132 @@
+/*
+ * The opening of the chat: the greeting, one question and the request box, in the middle of the
+ * screen. A soft glow of the brand rises from the foot of the screen. New in this project; it
+ * goes to the Design System later.
+ */
+.home {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+/* A wide dome of the brand color behind everything, brighter at its top edge. */
+.glow {
+  position: absolute;
+  top: 56%;
+  left: 50%;
+  width: max(1400px, 150%);
+  aspect-ratio: 1;
+  border-radius: var(--r-full);
+  background: radial-gradient(
+    circle at 50% 0%,
+    color-mix(in srgb, var(--brand-600) 15%, var(--paper)) 0%,
+    color-mix(in srgb, var(--brand-600) 7%, var(--paper)) 22%,
+    color-mix(in srgb, var(--brand-600) 2%, var(--paper)) 48%,
+    var(--paper) 70%
+  );
+  box-shadow: 0 -32px 96px color-mix(in srgb, var(--brand-600) 8%, transparent);
+  pointer-events: none;
+  translate: -50% 0;
+}
+
+/*
+ * On the dark the light under the request is not blue (blue on black reads as navy): a breath of
+ * white rising from below the box, enough to give the page depth.
+ */
+:global([data-color-scheme="dark"]) .glow {
+  background: radial-gradient(
+    circle at 50% 0%,
+    color-mix(in srgb, var(--g-950) 4.5%, var(--paper)) 0%,
+    color-mix(in srgb, var(--g-950) 2%, var(--paper)) 24%,
+    color-mix(in srgb, var(--g-950) 0.5%, var(--paper)) 48%,
+    var(--paper) 70%
+  );
+  box-shadow: none;
+}
+
+.scroll {
+  position: relative;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.column {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-6);
+  width: 100%;
+  max-width: 960px;
+  min-height: 100%;
+  margin: 0 auto;
+  /* More room under than above: the box sits a little over the middle of the screen. */
+  padding: var(--s-10) var(--s-8) 18vh;
+}
+
+/* The conversation itself, once it started: a reading column in the middle of the area. */
+.thread {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 800px;
+  height: 100%;
+  min-height: 0;
+  margin: 0 auto;
+}
+
+.hello {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-1);
+  text-align: center;
+}
+
+.greeting {
+  margin: 0;
+  font: 400 15px / 22px var(--font);
+  color: var(--muted);
+}
+
+.headline {
+  margin: 0;
+  font: 600 34px / 42px var(--font);
+  letter-spacing: var(--track-display);
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* The request box, the same as everywhere, in a column that is easy to read. */
+.ask {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+/* In a narrow area the question takes less room, and so does what is around it. */
+@container (max-width: 760px) {
+  .column {
+    gap: var(--s-5);
+    padding: var(--s-8) var(--s-5) var(--s-10);
+  }
+
+  .headline {
+    font: 600 26px / 32px var(--font);
+    letter-spacing: var(--track-title);
+  }
+}
+
+@media (max-width: 640px) {
+  .column {
+    justify-content: flex-start;
+    padding: var(--s-6) var(--page-gutter-sm) var(--s-8);
+  }
+}

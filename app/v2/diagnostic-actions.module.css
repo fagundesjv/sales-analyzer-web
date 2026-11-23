@@ -1,0 +1,5 @@
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.actions:empty { display: none; }
+@media (max-width: 600px) {
+  .actions > button { flex: 1 1 auto; min-height: 44px; }
+}

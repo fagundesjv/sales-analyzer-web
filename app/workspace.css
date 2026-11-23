@@ -1,0 +1,454 @@
+/* Sales-specific content slots inside the original Content OS components. */
+.sales-chat-start,
+.sales-context,
+.flow,
+.case-work,
+.source-card,
+.op-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+.sales-chat-start {
+  gap: var(--s-6);
+}
+.sales-context {
+  box-sizing: border-box;
+  height: 100%;
+  overflow: auto;
+  padding: var(--s-4);
+  gap: var(--s-6);
+}
+.sales-quote {
+  font: var(--t-small);
+  color: var(--muted);
+  line-height: 1.6;
+  margin: var(--s-3) 0;
+}
+.actions,
+.section-actions,
+.check-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+.zoe {
+  object-fit: contain;
+}
+.op-form,
+.flow {
+  align-items: stretch;
+}
+.op-form > button,
+.flow > button,
+.source-card > a {
+  align-self: flex-start;
+}
+.op-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-1);
+  font: var(--t-small-strong);
+  color: var(--text);
+}
+.op-field > input,
+.op-field > select,
+.sales-select {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: var(--h-md);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  color: var(--ink);
+  font: var(--t-body);
+}
+.source-card,
+.sample-msg {
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.source-card h2,
+.case-work h2 {
+  margin: 0;
+  font: var(--t-body-strong);
+  color: var(--ink);
+}
+.flow p,
+.source-card p,
+.sample-msg,
+.fold p {
+  font: var(--t-body);
+  color: var(--text);
+  margin: 0;
+}
+.fold {
+  font: var(--t-small);
+  color: var(--muted);
+}
+.fold summary {
+  cursor: pointer;
+}
+.fold p {
+  margin-top: var(--s-2);
+}
+.muted,
+.event-list small {
+  color: var(--muted);
+}
+.progress,
+.event-list {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: var(--t-small);
+}
+.progress li,
+.event-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.progress li[data-current="true"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+.timer {
+  font: var(--t-display);
+  font-variant-numeric: tabular-nums;
+}
+.toast {
+  position: fixed;
+  bottom: var(--s-4);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 90vw;
+  padding: var(--s-2) var(--s-3);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--r-md);
+  font: var(--t-small);
+  z-index: var(--z-toast);
+  box-shadow: var(--shadow-md);
+}
+
+.sales-wordmark{display:block;flex:none;padding:22px 20px 12px;color:var(--ink)}
+.sales-wordmark img{display:block;width:140px;height:auto}
+.sales-transcript{display:flex;flex-direction:column;gap:var(--s-3);padding:var(--s-4);background:var(--g-25);border:1px solid var(--line);border-radius:var(--r-lg)}
+.sales-transcript>div{align-self:flex-end;max-width:85%}
+.sales-transcript>div:last-child{align-self:flex-start}
+.sales-transcript small{display:block;font:var(--t-caption);color:var(--muted);margin-bottom:4px}
+.sales-transcript p{margin:0;padding:var(--s-3);border:1px solid var(--line);border-radius:var(--r-lg);background:var(--paper);font:var(--t-body);color:var(--ink)}
+.sales-transcript>div:last-child p{background:var(--g-75)}
+
+.zoe-shortcuts {display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:var(--s-2)}
+
+.stock-label{display:flex;align-items:center;gap:7px;color:var(--muted);font:var(--t-small)}
+.stock-match{padding-bottom:12px;border-bottom:1px solid var(--line)}
+.stock-match p{font:var(--t-small);color:var(--muted);margin:6px 0}
+
+.sales-detail-art{position:relative;height:128px;overflow:hidden;border-radius:var(--r-md);margin-bottom:var(--s-3)}
+.sales-surface :where(a,button,summary):focus-visible{
+  outline:2px solid var(--brand-600);outline-offset:3px;
+}
+.sales-surface :where(button:disabled,[aria-disabled=true]){cursor:default}
+@media (prefers-reduced-motion:no-preference){
+  .sales-surface :where(button:not(:disabled),a[data-variant],summary){transition:background-color .17s ease-out,color .17s ease-out,border-color .17s ease-out,box-shadow .2s ease-out,scale .18s cubic-bezier(.2,.8,.22,1)}
+  .sales-surface :where(button:not(:disabled),a[data-variant]):active{scale:.98}
+  .sales-surface .op-field :where(input,select,textarea),.sales-surface .sales-select{transition:border-color .18s ease-out,box-shadow .2s ease-out}
+}
+@media(prefers-reduced-motion:reduce){
+  .sales-surface *,.sales-surface *::before,.sales-surface *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+.sales-location{font:var(--t-small-strong);color:var(--ink)}
+.sales-context-nav{display:flex;align-items:center;flex-wrap:wrap;gap:6px;width:100%;box-sizing:border-box;margin:0 0 var(--sales-section);border-bottom:1px solid var(--line);padding-bottom:8px}
+.sales-context-nav a{border-radius:7px;text-decoration:none;color:var(--muted);font:var(--t-small);padding:7px 12px}
+.sales-context-nav a[aria-current]{color:var(--ink);background:var(--g-100);font-weight:600}
+.sales-context-nav a:hover{background:var(--paper-hover);color:var(--ink)}
+.sales-insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:var(--s-3)}
+.sales-insights details{border-top:1px solid var(--line);padding:8px 0}.sales-insights summary{cursor:pointer;font:var(--t-small-strong);color:var(--ink)}.sales-insights strong{float:right;color:var(--muted);font:var(--t-small)}.sales-insights a{display:flex;justify-content:space-between;color:var(--ink);text-decoration:none;font:var(--t-small);padding:8px 0}.sales-insights a:hover{text-decoration:underline}.sales-insights a span{color:var(--muted)}
+
+.conversation-file {
+  display: grid;
+  gap: .5rem;
+  margin-top: .5rem;
+  overflow-wrap: anywhere;
+}
+.conversation-file img, .conversation-file audio {
+  display: block;
+  max-width: 100%;
+}
+.conversation-file img {
+  max-height: 18rem;
+  object-fit: contain;
+  border-radius: .6rem;
+}
+.zoe-attach {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .4rem;
+  border-radius: .5rem;
+  cursor: pointer;
+}
+.zoe-attach:focus-within { outline: 2px solid currentColor; }
+.zoe-attach input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
+.zoe-attach:hover { background: var(--line-soft); }
+.zoe-evidence blockquote { margin: .75rem 0 .25rem; padding-inline-start: .75rem; border-inline-start: 2px solid var(--line-soft); }
+.sales-product-entry { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 9px; min-height: 32px; border-radius: 8px; color: var(--text); text-decoration: none; white-space: nowrap; font: var(--t-small); }
+.sales-product-entry:hover, .sales-product-entry:focus-visible { background: var(--paper-hover); color: var(--ink); }
+@media (max-width: 600px) { .sales-product-entry { padding-inline: 4px; font-size: 11px; } }
+
+.product-evidence { margin-top:var(--s-4);border-top:1px solid var(--line);padding-top:var(--s-3);font:var(--t-small);color:var(--text); }
+.product-evidence summary { cursor:pointer; }
+.product-evidence label { margin-block:var(--s-3); }
+.product-evidence a { display:flex;justify-content:space-between;gap:var(--s-2);padding:var(--s-2) 0;color:var(--ink); }
+.zoe-byline {display:flex;align-items:center;gap:6px;font:var(--t-small-strong);color:var(--text);}
+.zoe-brief {max-width:680px;border:1px solid var(--line);border-radius:var(--r-2xl);padding:var(--s-5);background:var(--paper);}
+.zoe-brief h2 {font:var(--t-title);color:var(--ink);letter-spacing:-.035em;}
+.zoe-brief blockquote {margin:12px 0;padding:6px 12px;border-left:2px solid var(--line-hover);font:var(--t-body);color:var(--text);}
+.zoe-brief p {font:var(--t-small);color:var(--muted);}
+.zoe-sources,.zoe-bars {display:grid;gap:6px;min-width:0;}
+.zoe-sources > small {font:var(--t-caption);color:var(--muted);}
+.zoe-sources > div > svg {flex:none;color:var(--muted);}
+.zoe-bars a {display:grid;gap:4px;border-radius:6px;padding:5px;color:var(--text);text-decoration:none;font:var(--t-small);}
+.zoe-bars a:hover {background:var(--paper-hover);}
+.zoe-bars span {display:flex;justify-content:space-between;gap:6px;}
+.zoe-bars meter {width:100%;height:6px;appearance:none;background:var(--line-soft);border:none;border-radius:4px;}
+.zoe-bars meter::-webkit-meter-bar {background:var(--line-soft);border:0;height:6px;}
+.zoe-bars meter::-webkit-meter-optimum-value {background:var(--ink);border-radius:4px;}
+.zoe-bars meter::-moz-meter-bar {background:var(--ink);border-radius:4px;}
+.zoe-history-search {margin:var(--s-2) var(--s-3) var(--s-3);}
+.sales-confetti {pointer-events:none;position:fixed;inset:0;width:100%;height:100%;z-index:500;}
+.follow-presets {display:flex;gap:5px;}
+.follow-presets button {cursor:pointer;color:var(--text);font:var(--t-caption);border:1px solid var(--line);border-radius:20px;background:var(--paper);padding:3px 9px;}
+.follow-presets button[aria-pressed=true]{border-color:var(--ink);color:var(--ink);background:var(--paper-sunken);}
+.sales-theme-switch {position:relative;display:inline-flex;align-items:center;justify-content:space-around;isolation:isolate;gap:0;width:49px;height:26px;flex:none;padding:0;cursor:pointer;border-radius:24px;border:1px solid var(--line);background:var(--paper-sunken);color:var(--muted);}
+.sales-theme-switch::before{content:"";position:absolute;z-index:-1;left:2px;top:2px;width:20px;height:20px;border-radius:100%;background:var(--paper);border:1px solid var(--line);box-sizing:border-box;box-shadow:var(--shadow-sm);transition:transform var(--dur-2) var(--ease-out);}
+.sales-theme-switch[aria-checked=true]::before{transform:translateX(23px);background:#333;}
+.sales-theme-switch[aria-checked=true] svg:last-child,.sales-theme-switch[aria-checked=false] svg:first-child{color:var(--ink);}
+.sales-hold {position:relative;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;isolation:isolate;gap:6px;border-radius:var(--r-lg);border:1px solid var(--line);background:var(--paper);color:var(--text);min-height:32px;padding:4px 10px;font:var(--t-small-strong);cursor:pointer;user-select:none;touch-action:manipulation;}
+.sales-hold::before{content:"";position:absolute;inset:0;z-index:-1;transform:scaleX(0);transform-origin:left;background:color-mix(in srgb,#d67765 24%,var(--paper));}
+.sales-hold[data-holding=true]::before{transform:scaleX(1);transition:transform .8s linear;}
+@media(prefers-reduced-motion:reduce){.sales-confetti{display:none;}.sales-theme-switch::before,.sales-hold[data-holding=true]::before{transition:none;}}
+@media(max-width:600px){.sales-product-entry{width:30px;padding:0;}.sales-product-entry span{display:none;}.sales-location{white-space:nowrap;}}
+
+.sales-surface .op-field > :is(input,select,textarea):focus-visible,
+.sales-surface .office-hours input:focus-visible,
+.sales-surface .sales-select:focus-visible {
+  border-color: var(--focus-color);
+  outline: 2px solid transparent;
+  outline-offset: 0;
+  box-shadow: 0 0 0 2px var(--line-soft);
+}
+.sales-surface .op-field > :is(input,select,textarea):is([aria-invalid="true"], :user-invalid) {
+  border-color: var(--danger, #b34045);
+}
+
+/* Shared form rhythm for the Content OS dialog and mobile sheet. */
+dialog .op-form { gap: var(--s-4); }
+dialog .op-form p { margin: 0; line-height: 1.5; }
+dialog .op-field { gap: 6px; }
+dialog .op-field > :is(input, select) { width: 100%; min-height: 38px; }
+dialog .check-row { flex-wrap: nowrap; align-items: flex-start; gap: 9px; font: var(--t-small); }
+dialog .check-row input { flex: none; margin: 2px 0 0; }
+dialog :where(.actions, .section-actions) { justify-content: flex-end; }
+dialog .op-form > button[type=submit] { align-self: flex-end; }
+.reopen-summary { display: grid; gap: 12px; }
+.reopen-summary span { display: inline-flex; align-items: center; gap: 8px; justify-self: start; padding: 5px 9px; border-radius: var(--r-md); background: var(--paper-sunken); font: var(--t-small-strong); }
+.reopen-summary p { color: var(--muted); font: var(--t-small); }
+
+/* Let the available panel width drive navigation and form layout. */
+.settings-layout {
+  display: grid;
+  grid-template-columns: clamp(168px, 14%, 216px) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sales-gutter);
+  width: 100%;
+}
+.settings-content { display: grid; align-content: start; gap: var(--sales-section); min-width: 0; container: settings-body / inline-size; }
+.settings-content > div { max-width: none; gap: var(--sales-section); }
+.settings-content header:first-child { margin-bottom: 0; }
+.settings-tools { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.settings-tools > :first-child { flex: 1; min-width: 0; }
+.settings-tools > button { flex-shrink: 0; }
+.settings-initials { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 11px; background: var(--paper-sunken); color: var(--text); font: var(--t-small-strong); }
+.settings-profile { display: grid; grid-template-columns: minmax(0,1fr); gap: var(--sales-grid-gap); }
+.settings-profile fieldset { margin: 0; min-width: 0; padding: var(--s-4) 0 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-content: start; gap: 16px; border: 0; border-top: 1px solid var(--line); }
+.settings-group-title { grid-column: 1/-1; display: flex; align-items: center; gap: var(--s-2); min-height: 28px; color: var(--ink); }
+.settings-group-title h2 { margin: 0; font: var(--t-body-strong); }
+.settings-group-title img { object-fit: contain; }
+.settings-profile .op-field > :is(input,select) { width: 100%; min-width: 0; min-height: 40px; }
+.settings-profile .settings-pause { grid-column: 1 / -1; font: var(--t-small); padding-top: var(--s-3); border-top: 1px solid var(--line-soft); }
+.settings-save { grid-column: 1/-1; display: flex; justify-content: flex-end; gap: var(--s-2); }
+.settings-save[data-dirty] { position: sticky; bottom: 0; z-index: 2; background: var(--paper); padding-block: 10px; border-top: 1px solid var(--line); }
+.settings-empty { padding: 16px; border: 1px dashed var(--line); border-radius: var(--r-lg); color: var(--muted); }
+.settings-empty p { margin: 0; }
+.settings-demo p,.settings-content .source-card > p { font: var(--t-small); color: var(--muted); }
+
+@media (max-width: 860px) {
+  .settings-layout { display: block; }
+}
+@container settings-body (max-width: 540px) {
+  .settings-profile fieldset { grid-template-columns: minmax(0,1fr); gap: var(--s-3); }
+  .settings-save { background: var(--paper); padding-block: var(--s-2) max(var(--s-2), env(safe-area-inset-bottom)); }
+  .settings-save button { min-height: 44px; }
+  .settings-save button[type=submit] { flex: 1; }
+  .settings-tools { flex-wrap: wrap; }
+  .settings-tools > :first-child { min-width: min(100%, 185px); }
+}
+.settings-provider,.settings-thumb { display: grid; place-items: center; flex: none; position: relative; overflow: hidden; width: 40px; height: 40px; border-radius: 11px; border: 1px solid var(--line); }
+.settings-provider { background: var(--paper); }
+.settings-provider img { object-fit: contain; }
+/* These inline controls are rendered inside the design system's native fields. */
+button:is([aria-label="Limpar busca"],[aria-label="Aumentar"],[aria-label="Diminuir"]) { position: relative; }
+button:is([aria-label="Limpar busca"],[aria-label="Aumentar"],[aria-label="Diminuir"])::after {
+  content: attr(aria-label); position: absolute; z-index: 5; bottom: calc(100% + 5px); right: 0;
+  width: max-content; pointer-events: none; border-radius: var(--r-md); padding: 4px 8px;
+  color: var(--paper); background: var(--ink); font: var(--t-caption); opacity: 0; visibility: hidden;
+}
+@media (hover: hover) {
+  button:is([aria-label="Limpar busca"],[aria-label="Aumentar"],[aria-label="Diminuir"]):hover::after { opacity: 1; visibility: visible; transition: opacity .12s .25s; }
+}
+button:is([aria-label="Limpar busca"],[aria-label="Aumentar"],[aria-label="Diminuir"]):focus-visible::after { opacity: 1; visibility: visible; }
+
+
+.field-error { color: var(--danger, #b34045); font: var(--t-caption); }
+.office-hours { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.hours-label, .hours-range { display: flex; align-items: center; gap: 8px; }
+.hours-label { justify-content: space-between; font: var(--t-small-strong); }
+.hours-label button { border: 0; background: transparent; color: var(--muted); font: var(--t-caption); cursor: pointer; padding: 3px 0; text-decoration: underline; text-underline-offset: 3px; }
+.office-hours input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 40px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--paper); color: var(--ink); padding: 0 10px; font: var(--t-body); }
+.hours-range span { font: var(--t-small); color: var(--muted); }
+
+@media (max-width: 640px) {
+  /* Native pickers and the iOS keyboard should open at the current zoom level. */
+  .sales-surface :is(input:not([type="checkbox"],[type="radio"],[type="file"],[type="range"]), select, textarea),
+  dialog :is(input:not([type="checkbox"],[type="radio"],[type="file"],[type="range"]), select, textarea) { font-size: max(16px, 1em); }
+  .sales-surface .op-field > :is(input, select), dialog .op-field > :is(input, select),
+  .office-hours input, .hours-label button,
+  .sales-surface div[data-variant]:has(> input:is([type="search"], [inputmode="decimal"])),
+  dialog div[data-variant]:has(> input:is([type="search"], [inputmode="decimal"])) { min-height: 44px; }
+}
+
+/* The same close target stays above the scrolling content of every mobile sheet. */
+dialog[data-snap] {
+  bottom: var(--sales-keyboard, 0px);
+  --sheet-max: calc((100dvh - var(--sales-keyboard, 0px)) * .94);
+}
+.sales-dialog-title { overflow-wrap: anywhere; }
+dialog[data-snap] .sales-dialog-title { display: block; padding-right: 36px; }
+.sales-sheet-close {
+  position: absolute;
+  top: 8px;
+  right: max(10px, env(safe-area-inset-right));
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.sales-sheet-close:hover, .sales-sheet-close:focus-visible { color: var(--ink); background: var(--paper-hover); }
+dialog[data-snap] footer :is(button, a[href]) { min-height: 44px; }
+dialog :where(form, fieldset, label, p) { min-width: 0; overflow-wrap: anywhere; }
+.toast { bottom: calc(max(12px, env(safe-area-inset-bottom)) + var(--sales-keyboard, 0px)); width: max-content; box-sizing: border-box; text-align: center; }
+@media (max-width: 640px) {
+  .sales-context-nav {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 2px;
+    padding-bottom: 5px;
+  }
+  .sales-context-nav a {
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 4px 2px;
+    text-align: center;
+    font-size: clamp(11.5px, 3.4vw, 13px);
+  }
+  .sales-location { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .sales-surface :where(.check-row, .fold summary, .sales-insights summary, .sales-insights a),
+  dialog .check-row { align-content: center; min-height: 44px; box-sizing: border-box; }
+  .sales-surface .check-row, dialog .check-row { align-items: center; }
+  .sales-surface .check-row input, dialog .check-row input { accent-color: var(--ink); }
+  .sales-surface .op-form > button, dialog .op-form :is(button[data-variant], a[data-variant]),
+  .sales-surface .flow > button, .zoe-attach { min-height: 44px; }
+}
+
+/* The Content OS sheet owns the page gutters. Screens own their internal layout. */
+:root {
+  --sales-gutter: var(--s-10, 40px);
+  --sales-page-top: var(--s-6, 24px);
+  --sales-section: var(--s-6, 24px);
+  --sales-grid-gap: var(--s-4, 16px);
+  --sales-card-pad: var(--s-6, 24px);
+}
+@media (max-width: 1199px) {
+  :root {
+    --sales-gutter: var(--s-6, 24px);
+    --sales-card-pad: var(--s-5, 20px);
+  }
+}
+@media (max-width: 640px) {
+  :root {
+    --sales-gutter: var(--s-4, 16px);
+    --sales-page-top: var(--s-4, 16px);
+    --sales-section: var(--s-4, 16px);
+    --sales-grid-gap: var(--s-3, 12px);
+    --sales-card-pad: var(--s-4, 16px);
+  }
+}
+.sales-surface [data-part="content"]:has(> .sales-page) {
+  box-sizing: border-box;
+  max-width: none;
+  padding: var(--sales-page-top) max(var(--sales-gutter), env(safe-area-inset-right)) max(var(--sales-gutter), env(safe-area-inset-bottom)) max(var(--sales-gutter), env(safe-area-inset-left));
+}
+.sales-page {
+  width: 100%; min-width: 0; max-width: 1760px; margin-inline: auto;
+}
+.sales-page [data-part="page-header"] { margin-block-end: 0; }
+.sales-page :is(header, [data-part="page-header"]) h1:not([data-long]) {
+  margin-block: 0;
+  font: 600 clamp(26px, 2.4vw, 34px)/1.15 var(--font);
+  letter-spacing: -.045em;
+}
+dialog:has(.sales-dialog-title) :is(header:has(.sales-dialog-title), header + div:has(> [data-measure]), footer[data-measure]),
+dialog[data-snap]:has(.sales-dialog-title) :is(div:has(> h2 > .sales-dialog-title), div:has(> .sales-sheet-content)),
+dialog[data-snap]:has(.sales-dialog-title) > footer {
+  padding-inline: var(--sales-card-pad);
+}
+.sales-sheet-content { display: contents; }
+.sales-page .source-card { padding: var(--sales-card-pad); }
+@media (max-width: 860px) and (prefers-reduced-motion: no-preference) {
+  .settings-content { animation: enter-setting 160ms var(--ease-out); }
+  @keyframes enter-setting {
+    from { opacity: .6; translate: 10px 0; }
+    to { opacity: 1; translate: 0 0; }
+  }
+}
+
+.company-sources { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; color:var(--text); font:var(--t-small); }
+.company-sources > span { color:var(--muted); }
+.company-sources a { color:var(--ink); }
+.settings-content h1[tabindex="-1"]:focus { outline: none; }
+.company-more { grid-column: 1/-1; border-top: 1px solid var(--line-soft); }
+.company-more > summary { font: var(--t-small-strong); color: var(--text); padding-block: 12px; cursor: pointer; }
+.company-more > div { display: grid; gap: 12px; }
+.company-more textarea { width: 100%; resize: vertical; }
+
+.settings-task { display: grid; min-width: 0; gap: var(--s-4); }

@@ -1,0 +1,16 @@
+.form { display: grid; gap: var(--s-4, 16px); min-width: 0; }
+.form p { margin: 0; overflow-wrap: anywhere; }
+.form > label { display: grid; gap: var(--s-2, 8px); font: var(--t-small-strong); }
+.hint { color: var(--muted); font: var(--t-small); }
+.modes { border: 0; margin: 0; padding: 0; display: flex; gap: 4px; min-width: 0; }
+.modes legend { padding: 0; margin-bottom: 6px; font: var(--t-small-strong); }
+.modes label { flex: 1; min-width: 0; position: relative; }
+.modes input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.modes span { display: grid; place-items: center; min-height: 44px; border: 1px solid var(--line);
+  border-radius: var(--r-md); color: var(--muted); font: var(--t-small-strong); cursor: pointer; }
+.modes input:checked + span { background: var(--paper-sunken); color: var(--ink); border-color: var(--line-strong); }
+.modes input:focus-visible + span { outline: 2px solid var(--focus-color); outline-offset: 2px; }
+@media (max-width: 600px) {
+  .form input:not([type="radio"]) { min-height: 44px; font-size: 16px; }
+  .form button { min-height: 44px; }
+}

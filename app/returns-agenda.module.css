@@ -1,0 +1,35 @@
+.agenda { display: grid; gap: var(--sales-section); min-width: 0; container-type: inline-size; }
+.toolbar, .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.toolbar { flex-wrap: wrap; }
+.toolbar > div { max-width: 100%; }
+.brief { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 14px 20px; border: 1px solid var(--line); border-radius: 16px; padding: var(--sales-card-pad); background: linear-gradient(115deg, color-mix(in srgb, var(--green-ink) 5%, var(--paper)), var(--paper) 70%); }
+.briefText, .detail { display: grid; gap: 5px; min-width: 0; }
+.brief > a { grid-column: 1; justify-self: start; }
+.product { grid-area: 1/2/3/3; align-self: center; margin: 0; width: clamp(70px, 15cqw, 154px); }
+.product > div { position: relative; aspect-ratio: 4/3; border-radius: var(--r-md); overflow: hidden; }
+.product figcaption { margin-top: 6px; color: var(--muted); font: var(--t-caption); overflow-wrap: anywhere; }
+.byline { display: inline-flex; gap: 6px; align-items: center; color: var(--green-ink); font: var(--t-small-strong); }
+.brief h2, .empty h2 { font: var(--t-page); margin: 4px 0 0; }
+.brief p, .empty p { margin: 0; max-width: 62ch; font: var(--t-body); }
+.brief blockquote { border-inline-start: 2px solid var(--line); margin: 6px 0 0; padding-inline-start: 10px; font: var(--t-small); color: var(--muted); overflow-wrap: anywhere; }
+.brief small, .detail small { color: var(--muted); font: var(--t-small); }
+.list { list-style: none; margin: 0; padding: 0; }
+.row { border-bottom: 1px solid var(--line-soft); padding: 16px 2px; }
+.row:first-child { border-top: 1px solid var(--line-soft); }
+.detail a, .detail strong { color: var(--text); font: var(--t-body-strong); overflow-wrap: anywhere; text-decoration: none; }
+.detail a svg { vertical-align: middle; margin-inline-start: 5px; color: var(--muted); }
+.detail a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.date { font-weight: 600; font-variant-numeric: tabular-nums; }
+.date[data-late=true] { color: var(--danger); }
+.actions { display: flex; gap: 6px; flex-shrink: 0; }
+.empty { display: grid; gap: 8px; justify-items: center; text-align: center; padding: clamp(24px, 5vw, 62px) 16px; border: 1px dashed var(--line); border-radius: 16px; color: var(--muted); }
+.empty h2 { color: var(--text); }
+.empty a { margin-top: 8px; }
+@container (max-width: 555px) {
+  .row { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .brief { gap: 12px; }
+  .brief a, .actions button, .toolbar button { min-height: 44px; }
+  .toolbar { gap: 8px; }
+  .toolbar > [role="group"] { width: 100%; }
+  .toolbar > [role="group"] button { justify-content: center; flex: 1 0 auto; gap: 4px; padding-inline: 5px; font: var(--t-small); }
+}

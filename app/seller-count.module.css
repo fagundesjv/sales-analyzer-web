@@ -1,0 +1,57 @@
+.counter {
+  display: inline-grid;
+  grid-template-columns: 44px minmax(40px, 1fr) 44px;
+  box-sizing: border-box;
+  width: 142px;
+  align-items: stretch;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
+}
+.counter button,
+.counter input {
+  text-align: center;
+  background: transparent;
+  border: 0;
+  min-height: 44px;
+  color: var(--ink);
+  border-radius: var(--r-lg);
+  font: inherit;
+}
+.counter input {
+  font-size: 1rem;
+  min-width: 0;
+  width: 100%;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.counter input::-webkit-inner-spin-button,
+.counter input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.counter button {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.counter button:is(:hover, :focus-visible):enabled {
+  background: var(--paper-hover);
+}
+.counter button:disabled {
+  color: var(--subtle);
+  opacity: 0.45;
+  cursor: default;
+}
+.counter:focus-within {
+  border-color: var(--ink);
+}
+.counter :is(button, input):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -3px;
+}
+@media (max-width: 440px) {
+  .counter { width: 130px; }
+}

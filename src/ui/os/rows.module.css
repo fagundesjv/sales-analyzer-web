@@ -1,0 +1,206 @@
+/*
+ * A list of things as rows with a tile: the icon of what it is, its name, one line about it and,
+ * at the end, where it stands. Rows go two by two under the name of their group, with how many
+ * the group holds. New in this project; it goes to the Design System after the interface is
+ * approved.
+ */
+.groups {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: var(--s-6) 0;
+}
+
+.group:first-child {
+  padding-top: var(--s-2);
+}
+
+.group + .group {
+  border-top: 1px solid var(--line);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: 0 10px;
+}
+
+.title {
+  margin: 0;
+  font: 500 15px / 22px var(--font);
+  letter-spacing: var(--track-tight);
+  color: var(--ink);
+}
+
+.count {
+  flex: 1 1 auto;
+  font: var(--t-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px var(--s-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grid[data-columns="1"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+  min-height: 64px;
+  padding: 0 10px;
+  border-radius: var(--r-lg);
+  transition: background var(--dur-1) var(--ease-out);
+}
+
+.row:hover,
+.row:focus-within {
+  background: var(--paper-hover);
+}
+
+.row[data-selected] {
+  background: var(--g-75);
+}
+
+/* The whole row opens the thing: the link stretches under what stands at the end. */
+.open {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+  padding: var(--s-3) 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.open::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+}
+
+.open:focus-visible {
+  outline: none;
+}
+
+.open:focus-visible::after {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset-inset);
+}
+
+.tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  color: var(--icon-hover);
+}
+
+.tile svg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  stroke-width: var(--icon-stroke-nav);
+}
+
+.text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  font: 500 14px / 20px var(--font);
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail {
+  overflow: hidden;
+  font: var(--t-small);
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.end {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container page (max-width: 760px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A group of cards: as many side by side as fit, at any width of the page. */
+.group[data-cards] {
+  gap: var(--s-3);
+}
+
+.group[data-cards] .head {
+  padding: 0;
+}
+
+.group[data-cards] .grid {
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--s-4);
+}
+
+/* On a phone the cards go two by two: a list of covers, not one screen for each. */
+@media (max-width: 560px) {
+  .group[data-cards] .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    transition: none;
+  }
+}

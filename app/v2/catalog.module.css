@@ -1,0 +1,12 @@
+.fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-4); }
+.fields label { display: grid; gap: 6px; align-content: start; min-width: 0; font: var(--t-small-strong); }
+.fields :is(select, textarea) { min-width: 0; max-width: 100%; padding: 8px 10px; color: var(--ink);
+  font: var(--t-body); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--paper); }
+.fields textarea { resize: vertical; }
+.full { grid-column: 1 / -1; margin: 0; }
+.notice { margin: 0; font: var(--t-small-strong); color: var(--ink); overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .fields { grid-template-columns: minmax(0, 1fr); }
+  .fields :is(select, textarea, [data-size]) { min-height: 44px; }
+  .fields :is(input, select, textarea) { font-size: 16px; }
+}

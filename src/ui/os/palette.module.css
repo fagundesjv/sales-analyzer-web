@@ -1,0 +1,385 @@
+/*
+ * The search of the whole product, over the screen: one field, pills to cut the search to one
+ * kind of thing, the results at the start and, at the end, what the result in hand is. New in
+ * this project; it goes to the Design System after the interface is approved.
+ */
+.veil {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 11vh var(--s-4) var(--s-4);
+  border: 0;
+  background: var(--overlay);
+  color: var(--text);
+}
+
+.veil::backdrop {
+  background: none;
+}
+
+.veil:not([open]) {
+  display: none;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(940px, 100%);
+  max-height: min(640px, 100%);
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-2xl);
+  background: var(--paper);
+  box-shadow: var(--shadow-xl);
+  animation: rise var(--dur-2) var(--ease-out);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+.ask {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-3);
+  height: 54px;
+  padding: 0 var(--s-4) 0 var(--s-5);
+  border-bottom: 1px solid var(--line);
+}
+
+.ask svg {
+  flex: none;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  color: var(--icon-rest);
+  stroke-width: var(--icon-stroke);
+}
+
+.field {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  font: 400 15px / 22px var(--font);
+  color: var(--ink);
+}
+
+.field::placeholder {
+  color: var(--subtle);
+}
+
+.key {
+  flex: none;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xs);
+  background: var(--paper);
+  font: 500 10.5px / 18px var(--font);
+  color: var(--muted);
+}
+
+.scopes {
+  flex: none;
+  padding: var(--s-2) var(--s-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.body {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  min-height: 0;
+}
+
+.results {
+  min-height: 0;
+  padding: var(--s-2) var(--s-2) var(--s-3);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--g-200) transparent;
+}
+
+.groupLabel {
+  margin: 0;
+  padding: var(--s-3) var(--s-3) 6px;
+  font: 600 10.5px / 14px var(--font);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+  padding: 6px var(--s-3);
+  border: 0;
+  border-radius: var(--r-lg);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item[aria-selected="true"] {
+  background: var(--g-75);
+}
+
+.tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  color: var(--icon-hover);
+}
+
+.tile svg {
+  width: var(--icon-md);
+  height: var(--icon-md);
+  stroke-width: var(--icon-stroke-nav);
+}
+
+/* A miniature of the thing in the place of its icon, at the size of the icon tile. */
+.leading {
+  display: grid;
+  flex: none;
+  width: 30px;
+  height: 30px;
+}
+
+.item .leading > * {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--r-md);
+}
+
+.text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.label {
+  overflow: hidden;
+  font: 500 13.5px / 20px var(--font);
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail {
+  overflow: hidden;
+  font: var(--t-small);
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  flex: none;
+  font: var(--t-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.enter {
+  flex: none;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--icon-quiet);
+  visibility: hidden;
+}
+
+.item[aria-selected="true"] .enter {
+  visibility: visible;
+}
+
+.none {
+  margin: 0;
+  padding: var(--s-10) var(--s-4);
+  font: var(--t-body);
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ——— What the result in hand is ——— */
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--s-5) var(--s-4);
+  overflow-y: auto;
+  border-left: 1px solid var(--line);
+}
+
+/* The thing in hand, larger: what it is, seen before it is opened. */
+.picture {
+  display: grid;
+  min-width: 0;
+}
+
+.previewHead {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+.previewHead .tile {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-lg);
+}
+
+.previewTitle {
+  min-width: 0;
+  margin: 0;
+  padding-top: var(--s-1);
+  font: var(--t-title-3);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+}
+
+.fact + .fact {
+  border-top: 1px solid var(--line-soft);
+}
+
+.fact dt {
+  font: var(--t-small);
+  color: var(--muted);
+}
+
+.fact dd {
+  min-width: 0;
+  margin: 0;
+  font: var(--t-small-strong);
+  color: var(--ink);
+  text-align: right;
+}
+
+.noteLabel {
+  margin: 0 0 var(--s-1);
+  font: 600 10.5px / 14px var(--font);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+
+.note {
+  margin: 0;
+  font: var(--t-body);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.open {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font: var(--t-small);
+  color: var(--muted);
+}
+
+/* ——— The keys, at the foot ——— */
+.foot {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1) var(--s-4);
+  min-height: 38px;
+  padding: 0 var(--s-4);
+  border-top: 1px solid var(--line);
+  font: var(--t-caption);
+  color: var(--muted);
+}
+
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint[data-end] {
+  margin-left: auto;
+}
+
+@media (max-width: 760px) {
+  .veil {
+    padding: var(--s-3);
+  }
+
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .preview,
+  .foot {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}
+@media (max-width: 760px), (max-height: 500px) {
+  .veil {
+    height: calc(100dvh - var(--sales-keyboard, 0px));
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+  .ask { padding-inline: 12px 6px; gap: 8px; }
+  .ask button { min-width: 44px; min-height: 44px; }
+  .field { font-size: 16px; }
+}

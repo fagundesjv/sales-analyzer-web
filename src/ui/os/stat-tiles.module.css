@@ -1,0 +1,111 @@
+/*
+ * A few numbers that say where something stands, each in its own tile: what it counts, the
+ * number, and a line under it. A tile that leads somewhere is a link. New in this project; it
+ * goes to the Design System after the interface is approved.
+ */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* On a phone the numbers go two by two: they say where things stand without taking the screen. */
+@container page (max-width: 520px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-2);
+  }
+
+  /* The odd one out takes the whole line instead of leaving a hole beside it. */
+  .tiles > li:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .tiles .tile {
+    min-height: 0;
+    padding: var(--s-3);
+  }
+}
+
+@container page (min-width: 900px) {
+  .tiles[data-columns="4"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .tiles[data-columns="5"] {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 100%;
+  min-height: 98px;
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--paper);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color var(--dur-1) var(--ease-out),
+    background var(--dur-1) var(--ease-out);
+}
+
+a.tile:hover {
+  border-color: var(--line-hover);
+  background: var(--paper-hover);
+}
+
+a.tile:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+}
+
+.label {
+  overflow: hidden;
+  font: var(--t-body);
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.value {
+  font: 600 22px / 30px var(--font);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--track-title);
+  color: var(--ink);
+}
+
+.value[data-warn] {
+  color: var(--orange-ink);
+}
+
+.unit {
+  margin-left: 6px;
+  font: var(--t-body);
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.caption {
+  display: -webkit-box;
+  overflow: hidden;
+  font: var(--t-small);
+  color: var(--muted);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    transition: none;
+  }
+}

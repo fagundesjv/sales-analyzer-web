@@ -1,0 +1,16 @@
+# The existing Traefik runs in host network mode on the VPS. Its Docker provider
+# reaches the Web container on the already configured BFF bridge network.
+services:
+  web:
+    image: ${SA_WEB_IMAGE:?Informe a imagem pública do Web V2}
+    environment:
+      SA_WEB_ORIGIN: https://v2.salesanalyzer.app
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${SA_BFF_NETWORK:?Informe a rede Docker do BFF V2}
+      traefik.http.routers.sa-v2-web.rule: "Host(`v2.salesanalyzer.app`)"
+      traefik.http.routers.sa-v2-web.entrypoints: ${SA_TRAEFIK_ENTRYPOINT:-websecure}
+      traefik.http.routers.sa-v2-web.tls: "true"
+      traefik.http.routers.sa-v2-web.tls.certresolver: letsencrypt
+      traefik.http.routers.sa-v2-web.service: sa-v2-web
+      traefik.http.services.sa-v2-web.loadbalancer.server.port: "4319"

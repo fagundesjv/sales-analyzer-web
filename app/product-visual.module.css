@@ -1,0 +1,29 @@
+.frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  container-type: size;
+  isolation: isolate;
+  background: var(--paper-sunken);
+}
+.photo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100cqw, 150cqh);
+  aspect-ratio: 3/2;
+  transform: translate(-50%, -50%);
+  background-image: url("/assets/atelier-collection.jpg");
+  background-size: 200% 200%;
+  background-repeat: no-repeat;
+}
+.monogram {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(130deg, var(--paper-sunken), var(--g-150));
+  font: 550 clamp(32px, 30cqh, 90px)/1 var(--font);
+  letter-spacing: -0.08em;
+  color: var(--ink);
+}

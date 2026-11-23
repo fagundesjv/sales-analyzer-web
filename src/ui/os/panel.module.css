@@ -1,0 +1,280 @@
+/*
+ * The panel beside the conversation: the plan of the AI as a card with its steps, and around it
+ * plain sections with a quiet name (what was made, the sources, the facts of the conversation).
+ * New in this project; it goes to the Design System after the interface is approved.
+ */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  min-width: 0;
+}
+
+/* ——— The plan ——— */
+.plan {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  background: var(--g-25);
+}
+
+.plan[data-waiting] {
+  border-color: var(--brand-200);
+  background: var(--brand-25);
+}
+
+/* On the dark a blue ground this large reads as navy: the waiting plan keeps the quiet ground and
+   says it is the AI's with a blue edge. */
+:global([data-color-scheme="dark"]) .plan[data-waiting] {
+  background: var(--g-25);
+}
+
+.planHead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  padding: 0 var(--s-2) 0 var(--s-3);
+}
+
+.planIcon {
+  flex: none;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  color: var(--icon-rest);
+  stroke-width: var(--icon-stroke);
+}
+
+.plan[data-waiting] .planIcon {
+  color: var(--brand-600);
+}
+
+.planTitle {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font: var(--t-title-3);
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planCount {
+  flex: 1 1 auto;
+  font: var(--t-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.planBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: 0 var(--s-1) var(--s-1);
+  padding: var(--s-3) var(--s-3) var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+}
+
+.track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: var(--g-100);
+}
+
+.fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--brand-600);
+  transition: width var(--dur-3) var(--ease-out);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 6px 0;
+}
+
+/* The line that ties one step to the next. */
+.step:not(:last-child)::before {
+  position: absolute;
+  top: 26px;
+  bottom: -4px;
+  left: 7px;
+  width: 1px;
+  background: var(--line-strong);
+  content: "";
+}
+
+.mark {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+  color: var(--icon-quiet);
+  stroke-width: var(--icon-stroke);
+}
+
+.step[data-state="done"] .mark {
+  color: var(--green-dot);
+}
+
+.step[data-state="next"] .mark {
+  color: var(--brand-600);
+}
+
+.stepText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stepLabel {
+  font: var(--t-body);
+  color: var(--muted);
+}
+
+.step[data-state="next"] .stepLabel {
+  font: var(--t-body-strong);
+  color: var(--ink);
+}
+
+.step[data-state="done"] .stepLabel {
+  color: var(--text);
+}
+
+.step[data-state="skipped"] .stepLabel {
+  text-decoration: line-through;
+}
+
+.stepDetail {
+  font: var(--t-small);
+  color: var(--muted);
+}
+
+.stepEnd {
+  flex: none;
+}
+
+/* ——— A plain section ——— */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 24px;
+}
+
+.sectionTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font: var(--t-body);
+  color: var(--muted);
+}
+
+.sectionMeta {
+  font: var(--t-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--subtle);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: var(--t-body);
+  color: var(--muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.toggle:hover {
+  color: var(--ink);
+}
+
+.toggle svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  margin-left: auto;
+  color: var(--icon-quiet);
+  transition: rotate var(--dur-2) var(--ease-out);
+}
+
+.toggle[aria-expanded="true"] svg {
+  rotate: 90deg;
+}
+
+.toggle:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+}
+
+/* ——— Facts: a name at the start, its value at the end ——— */
+.facts {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: 7px 0;
+}
+
+.fact + .fact {
+  border-top: 1px solid var(--line-soft);
+}
+
+.fact dt {
+  flex: none;
+  font: var(--t-body);
+  color: var(--muted);
+}
+
+.fact dd {
+  min-width: 0;
+  margin: 0;
+  font: var(--t-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .toggle svg {
+    transition: none;
+  }
+}

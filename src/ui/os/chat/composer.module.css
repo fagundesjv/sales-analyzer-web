@@ -1,0 +1,277 @@
+/*
+ * The request box of the chat: one rounded card with the text on top, a row of tools under it
+ * (what to attach and how the request is taken at the start, the send at the end) and a strip
+ * at the foot that says what the AI works from. New in this project; it goes to the
+ * Design System after the interface is approved.
+ */
+.composer {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-2xl);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--dur-1) var(--ease-out),
+    box-shadow var(--dur-1) var(--ease-out);
+}
+
+.card:hover {
+  border-color: var(--line-hover);
+}
+
+.card:focus-within {
+  border-color: var(--g-500);
+  box-shadow: var(--focus-ring);
+}
+
+/* On the dark a light edge weighs more: the box in focus takes a step less, the same weight. */
+:global([data-color-scheme="dark"]) .card:focus-within {
+  border-color: var(--g-400);
+}
+
+.composer[data-status="error"] .card {
+  border-color: var(--red-dot);
+}
+
+/* What rides with the request: the content in focus, a stretch of it, the sources attached. */
+.attached {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: var(--s-3) var(--s-3) 0;
+}
+
+.attached:empty {
+  display: none;
+}
+
+/* A line about what rides with the request, right under it: how a news item attached is used. */
+.attachedNote {
+  margin: var(--s-2) var(--s-4) 0;
+  font: var(--t-caption);
+  color: var(--muted);
+}
+
+.text {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 14px var(--s-4) var(--s-1);
+  border: 0;
+  outline: none;
+  background: none;
+  font: 400 14px / 22px var(--font);
+  color: var(--ink);
+  resize: none;
+  scrollbar-width: thin;
+}
+
+/*
+ * The card shows the focus, rounded, around the whole box: the text inside it draws none. A
+ * general focus rule of the page weighs more than `.text` alone, so this one is as strong as it.
+ */
+.text:focus,
+.text:focus-visible {
+  outline: none;
+}
+
+.text::placeholder {
+  color: var(--subtle);
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-1) var(--s-2) var(--s-2);
+}
+
+.start,
+.end {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.start {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+}
+
+.end {
+  flex: none;
+  justify-content: flex-end;
+  gap: var(--s-2);
+}
+
+.send {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-full);
+  background: var(--ink);
+  color: var(--paper);
+  cursor: pointer;
+  transition:
+    background var(--dur-1) var(--ease-out),
+    transform var(--dur-1) var(--ease-out);
+}
+
+.send svg {
+  width: var(--icon-md);
+  height: var(--icon-md);
+  stroke-width: 2;
+}
+
+.send:hover {
+  background: var(--g-800);
+}
+
+.send:active {
+  transform: scale(0.94);
+}
+
+.send[aria-disabled="true"] {
+  background: var(--g-200);
+  color: var(--paper);
+  cursor: default;
+}
+
+.send[aria-disabled="true"]:active {
+  transform: none;
+}
+
+.send:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* The strip at the foot: what the AI works from. */
+.strip {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  min-height: 34px;
+  margin: 0 var(--s-3);
+  padding: 2px var(--s-1);
+  border-top: 1px solid var(--line-soft);
+  font: var(--t-small);
+  color: var(--muted);
+}
+
+.strip:empty {
+  display: none;
+}
+
+.stripItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.stripText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stripItem svg {
+  flex: none;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--icon-rest);
+  stroke-width: var(--icon-stroke);
+}
+
+.stripItem[data-end] {
+  flex: 0 1 auto;
+  margin-left: auto;
+  color: var(--subtle);
+}
+
+.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin: var(--s-2) var(--s-1) 0;
+  font: var(--t-small);
+  color: var(--red-ink);
+}
+
+.retry {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: var(--t-small-strong);
+  color: var(--ink);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.note {
+  margin: var(--s-2) 0 0;
+  font: var(--t-caption);
+  color: var(--subtle);
+  text-align: center;
+}
+
+/* What a recipe still asks to fill, in place of the note: the next thing to do. */
+.blanks {
+  margin: var(--s-2) 0 0;
+  font: var(--t-caption);
+  color: var(--accent-ink);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .send {
+    transition: none;
+  }
+
+  .spin {
+    animation-duration: 2.4s;
+  }
+}
+
+.send[data-text] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: auto;
+  min-width: 38px;
+  padding: 0 12px 0 9px;
+  font: var(--t-small-strong);
+}
+.send[data-text][aria-disabled="true"] { color: var(--muted); background: var(--paper-sunken); }

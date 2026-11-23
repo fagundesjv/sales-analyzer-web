@@ -1,0 +1,790 @@
+/*
+ * The radar of news laid out as the front page of a portal: a lead story with its picture, a
+ * rail of the newest beside it, rows of cards by section and the outlets side by side. The page
+ * measures itself, so it folds by the room it is given, whatever columns stand beside it. New in
+ * this project; it goes to the Design System after the interface is approved.
+ */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-8);
+  min-width: 0;
+  container-type: inline-size;
+}
+
+/* ——— Tints: an outlet is known by its colour ——— */
+.mark[data-tint="0"],
+.cover[data-tint="0"] {
+  --tint: var(--blue-dot);
+}
+
+.mark[data-tint="1"],
+.cover[data-tint="1"] {
+  --tint: var(--teal-dot);
+}
+
+.mark[data-tint="2"],
+.cover[data-tint="2"] {
+  --tint: var(--violet-dot);
+}
+
+.mark[data-tint="3"],
+.cover[data-tint="3"] {
+  --tint: var(--amber-dot);
+}
+
+.mark[data-tint="4"],
+.cover[data-tint="4"] {
+  --tint: var(--pink-dot);
+}
+
+.mark[data-tint="5"],
+.cover[data-tint="5"] {
+  --tint: var(--green-dot);
+}
+
+.mark[data-tint="6"],
+.cover[data-tint="6"] {
+  --tint: var(--orange-dot);
+}
+
+.mark {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--tint) 16%, var(--paper));
+  font: 600 11px / 1 var(--font);
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--tint) 60%, var(--ink));
+}
+
+.mark[data-size="sm"] {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-sm);
+  font-size: 9px;
+}
+
+.mark[data-size="lg"] {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-lg);
+  font-size: 15px;
+}
+
+/* ——— The picture of a story ——— */
+.cover {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  /* The letters of a drawn cover are sized by the cover itself, small or large. */
+  container-type: inline-size;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--g-75);
+}
+
+.cover[data-ratio="2/1"] {
+  aspect-ratio: 2 / 1;
+}
+
+.cover[data-ratio="4/3"] {
+  aspect-ratio: 4 / 3;
+}
+
+.cover[data-ratio="1/1"] {
+  aspect-ratio: 1 / 1;
+}
+
+.cover[data-size="thumb"] {
+  flex: none;
+  width: 64px;
+  border-radius: var(--r-md);
+}
+
+.picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+/* No picture: the letters of the outlet on its tint, over the lines of a page. */
+.drawn {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(
+      120% 90% at 0% 0%,
+      color-mix(in srgb, var(--tint) 26%, var(--paper)),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--tint) 9%, var(--paper));
+}
+
+.drawnLetters {
+  font: 600 clamp(12px, 24cqw, 64px) / 1 var(--font);
+  letter-spacing: -0.02em;
+  color: color-mix(in srgb, var(--tint) 46%, var(--paper));
+}
+
+.drawnLines {
+  position: absolute;
+  right: 12%;
+  bottom: 14%;
+  left: 12%;
+  height: 22%;
+  opacity: 0.5;
+  background: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--tint) 30%, var(--paper)) 0 3px,
+    transparent 3px 9px
+  );
+}
+
+/* ——— A story ——— */
+.story {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.storyCover {
+  min-width: 0;
+}
+
+.story:hover .picture {
+  transform: scale(1.025);
+}
+
+.storyText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font: var(--t-small);
+  color: var(--muted);
+}
+
+.headline {
+  margin: 0;
+  font: 600 16px / 22px var(--font);
+  letter-spacing: var(--track-tight);
+  color: var(--ink);
+}
+
+/* The headline opens the story, and the whole card answers the click with it. */
+.open {
+  display: -webkit-box;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.open::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.story:hover .open {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.open:focus-visible {
+  outline: none;
+}
+
+.open:focus-visible::after {
+  border-radius: var(--r-lg);
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+}
+
+.dek {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  font: var(--t-body);
+  color: var(--text);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.marks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1) var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: var(--t-small);
+  color: var(--muted);
+}
+
+.marks li {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* What to do with the story stands above the click of the card. */
+.actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  padding-top: 2px;
+}
+
+/* The lead: the picture large, the headline as the headline of the page. */
+.story[data-variant="lead"] {
+  gap: var(--s-4);
+}
+
+.story[data-variant="lead"] .cover {
+  border-radius: var(--r-xl);
+}
+
+.story[data-variant="lead"] .headline {
+  font: 600 28px / 34px var(--font);
+  letter-spacing: -0.02em;
+}
+
+.story[data-variant="lead"] .dek {
+  font: var(--t-prose-body-sm);
+}
+
+.story[data-variant="lead"] .storyText {
+  gap: var(--s-2);
+}
+
+/* A small story: the picture beside the words. */
+.story[data-variant="small"] {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.story[data-variant="small"] .storyCover {
+  flex: none;
+  width: 112px;
+}
+
+.story[data-variant="small"] .headline {
+  font: 600 14px / 20px var(--font);
+}
+
+/* The buttons of a small story keep to one line: their words are short, the room is not. */
+.story[data-variant="small"] .actions {
+  flex-wrap: nowrap;
+  gap: 0;
+  margin-left: calc(var(--s-2) * -1);
+}
+
+/* ——— The top: the lead and its rail ——— */
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+  gap: var(--s-8);
+  align-items: start;
+}
+
+.topLead {
+  min-width: 0;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  min-width: 0;
+  padding-left: var(--s-6);
+  border-left: 1px solid var(--line-soft);
+}
+
+@container (max-width: 760px) {
+  .top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-6);
+  }
+
+  .rail {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .story[data-variant="lead"] .headline {
+    font: 600 22px / 28px var(--font);
+  }
+}
+
+/* ——— A section ——— */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 30px;
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.sectionHead svg {
+  flex: none;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  color: var(--icon-rest);
+  stroke-width: var(--icon-stroke);
+}
+
+.sectionTitle {
+  margin: 0;
+  font: 600 15px / 22px var(--font);
+  letter-spacing: var(--track-tight);
+  color: var(--ink);
+}
+
+/* A section named after the words of a search starts with a capital like the others. */
+.sectionTitle::first-letter {
+  text-transform: uppercase;
+}
+
+.sectionMeta {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: var(--t-small);
+  color: var(--muted);
+}
+
+.sectionBody {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--s-6) var(--s-5);
+  min-width: 0;
+}
+
+.sectionBody[data-layout="wide"] {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.sectionBody[data-layout="list"] {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sectionBody[data-layout="stack"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+/* The desks of the portal, side by side. */
+.desks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--s-8) var(--s-6);
+  align-items: start;
+  min-width: 0;
+}
+
+/* ——— A feed of headlines ——— */
+.feed {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feedLine {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: var(--s-3);
+  padding: 10px 0;
+}
+
+.feedLine + .feedLine {
+  border-top: 1px solid var(--line-soft);
+}
+
+.feedWhen {
+  padding-top: 1px;
+  font: var(--t-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.feedWhen[data-rank] {
+  padding-top: 0;
+  font: 600 20px / 22px var(--font);
+  color: var(--g-300);
+}
+
+.feedText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.feedTitle {
+  display: -webkit-box;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 500 14px / 20px var(--font);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.feedTitle::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.feedLine:hover .feedTitle {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.feedTitle:focus-visible {
+  outline: none;
+}
+
+.feedTitle:focus-visible::after {
+  border-radius: var(--r-md);
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: 1px;
+}
+
+.feedMeta {
+  overflow: hidden;
+  font: var(--t-small);
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ——— The outlets side by side ——— */
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.outlet {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 100%;
+  padding: 6px var(--s-3) 6px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-full);
+  background: var(--paper);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-1) var(--ease-out),
+    background var(--dur-1) var(--ease-out);
+}
+
+.outlet:hover {
+  border-color: var(--line-hover);
+  background: var(--paper-hover);
+}
+
+.outlet[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--g-75);
+}
+
+.outlet:focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+}
+
+.outlet .mark {
+  border-radius: var(--r-full);
+}
+
+.outletText {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.outletName {
+  overflow: hidden;
+  font: 500 13px / 18px var(--font);
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outletDetail {
+  flex: none;
+  font: var(--t-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picture,
+  .outlet {
+    transition: none;
+  }
+
+  .story:hover .picture {
+    transform: none;
+  }
+}
+
+/* On a narrow page the outlets stay on one line and slide sideways. */
+@container (max-width: 560px) {
+  .strip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 calc(-1 * var(--s-4));
+    padding: 2px var(--s-4);
+    scrollbar-width: none;
+  }
+
+  .strip li {
+    flex: none;
+  }
+}
+
+/* ——— The sources of the radar as cards ——— */
+.sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.source {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--paper);
+  transition: border-color var(--dur-1) var(--ease-out);
+}
+
+.source:hover {
+  border-color: var(--line-hover);
+}
+
+.source[data-muted] {
+  background: var(--g-25);
+}
+
+.sourceHead {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.sourceNames {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.sourceTitle {
+  overflow: hidden;
+  margin: 0;
+  font: 600 15px / 22px var(--font);
+  letter-spacing: var(--track-tight);
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceTitle::first-letter {
+  text-transform: uppercase;
+}
+
+.source[data-muted] .sourceTitle {
+  color: var(--muted);
+}
+
+.sourceDetail {
+  overflow: hidden;
+  font: var(--t-small);
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-1);
+  margin: -4px -6px 0 0;
+}
+
+.sourceState {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.sourceWeek {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+.bars {
+  display: inline-flex;
+  flex: none;
+  align-items: flex-end;
+  gap: 3px;
+  width: 76px;
+  height: 36px;
+}
+
+.bar {
+  flex: 1 1 0;
+  border-radius: 2px 2px 0 0;
+  background: var(--ink);
+  transition: height var(--dur-2) var(--ease-out);
+}
+
+.bar[data-empty] {
+  background: var(--g-100);
+}
+
+.source[data-muted] .bar {
+  background: var(--g-300);
+}
+
+.source[data-muted] .bar[data-empty] {
+  background: var(--g-100);
+}
+
+.sourceFacts {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-4);
+  min-width: 0;
+  margin: 0;
+}
+
+.sourceFact {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sourceFact dt {
+  font: var(--t-small);
+  color: var(--muted);
+}
+
+.sourceFact dd {
+  margin: 0;
+  font: 600 14px / 20px var(--font);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.sourceProblem {
+  margin: 0;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-md);
+  background: var(--orange-bg);
+  font: var(--t-small);
+  color: var(--orange-ink);
+}
+
+.sourcePictures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+
+.sourceFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding-top: var(--s-1);
+  font: var(--t-small);
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .source,
+  .bar {
+    transition: none;
+  }
+}

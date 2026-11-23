@@ -1,0 +1,53 @@
+.toolbar,
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+}
+.toolbar {
+  justify-content: space-between;
+}
+.toolbar label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+.toolbar select {
+  max-width: 100%;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: var(--s-2) var(--s-3);
+  font: inherit;
+}
+.pager {
+  margin-block: var(--s-2);
+}
+.rules,
+.fields,
+.action {
+  display: grid;
+  gap: var(--s-2);
+  min-width: 0;
+}
+.rules {
+  gap: var(--s-3);
+  justify-items: start;
+}
+.fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.fields legend {
+  margin-bottom: var(--s-2);
+}
+.fields input {
+  accent-color: var(--ink);
+}
+.action {
+  overflow-wrap: anywhere;
+}

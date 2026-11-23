@@ -1,0 +1,403 @@
+.box {
+  position: relative;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 64%;
+  overflow: auto;
+  scrollbar-width: thin;
+  padding: 0 clamp(10px, 2vw, 26px) 12px;
+  color: var(--ink);
+  background: var(--paper);
+}
+.modes,
+.strip,
+.record,
+.target,
+.tool,
+.zoeTool,
+.reference,
+.attachment,
+.zoePanel > div,
+.zoePanel footer,
+.noteHistory summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.modes {
+  padding: 5px 1px 7px;
+  gap: 4px;
+}
+.modes button,
+.tool,
+.zoeTool,
+.strip button,
+.attachment button,
+.reference button,
+.zoePanel > div button,
+.record button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-lg, 8px);
+  cursor: pointer;
+  font: var(--t-small-strong);
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
+}
+.modes button {
+  padding: 6px 9px;
+  font-size: 12px;
+}
+.modes button[aria-pressed="true"] {
+  color: var(--ink);
+  background: var(--paper-sunken);
+  border-color: var(--line);
+}
+.box[data-note="true"] .modes button[aria-pressed="true"] {
+  color: var(--amber-ink, var(--ink));
+  background: color-mix(in srgb, #dda541 12%, var(--paper));
+}
+.channelName {
+  margin-left: auto;
+  font: var(--t-caption);
+  color: var(--muted);
+}
+.box textarea:focus,
+.box textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.box form:focus-within > div:first-child {
+  border-color: var(--line-hover);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--ink) 9%, transparent),
+    var(--shadow-sm);
+}
+.box[data-note="true"] form > div:first-child {
+  background: color-mix(in srgb, #e3b74d 5%, var(--paper));
+}
+.tool,
+.zoeTool {
+  height: 32px;
+  min-width: 32px;
+  padding: 0 6px;
+}
+.tool:hover,
+.modes button:hover,
+.strip button:hover {
+  background: var(--paper-hover);
+  color: var(--ink);
+}
+.zoeTool {
+  min-width: 45px;
+  border-color: var(--line);
+  margin-left: 2px;
+  border-radius: var(--r-full, 20px);
+  color: var(--ink);
+}
+.zoeTool:hover,
+.zoeTool[aria-pressed="true"] {
+  background: var(--paper-hover);
+  border-color: var(--line-hover);
+}
+.strip {
+  width: 100%;
+  min-height: 27px;
+  font: var(--t-caption);
+  color: var(--muted);
+}
+.strip > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.strip i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green-ink);
+}
+.strip small {
+  margin-left: auto;
+  font: inherit;
+}
+.strip button {
+  font: inherit;
+  padding: 3px 6px;
+}
+.reference,
+.attachment {
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  color: var(--text);
+  font: var(--t-small);
+}
+.reference {
+  width: 100%;
+  border-left: 3px solid var(--line-hover);
+  border-radius: 4px 8px 8px 4px;
+  padding: 6px 9px;
+  background: var(--paper-sunken);
+}
+.reference > span,
+.attachment > span,
+.target span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.reference small,
+.attachment strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.attachment {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 5px 8px;
+  flex-wrap: wrap;
+}
+.attachment > span {
+  max-width: 170px;
+}
+.attachment small,
+.target small {
+  font: var(--t-caption);
+  color: var(--muted);
+}
+.attachment img {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+.attachment audio,
+.attachment video {
+  max-width: 100%;
+  width: 220px;
+  max-height: 95px;
+}
+.attachment button,
+.reference button,
+.zoePanel > div button {
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+}
+.zoePanel,
+.noteHistory {
+  margin-bottom: 8px;
+  border-radius: var(--r-xl, 12px);
+  padding: 10px 12px;
+  background: var(--paper-sunken);
+  border: 1px solid var(--line);
+}
+.zoePanel strong,
+.noteHistory summary {
+  font: var(--t-small-strong);
+}
+.zoePanel p,
+.noteHistory p {
+  margin: 7px 0;
+  font: var(--t-small);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+.zoePanel footer {
+  justify-content: space-between;
+}
+.zoePanel footer a {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  font: var(--t-small-strong);
+}
+.noteHistory > div {
+  max-height: 120px;
+  overflow: auto;
+}
+.noteHistory summary {
+  cursor: pointer;
+}
+.noteHistory article {
+  padding: 6px 0;
+}
+.noteHistory small {
+  color: var(--muted);
+  font: var(--t-caption);
+}
+.record {
+  flex-wrap: wrap;
+  color: var(--ink);
+  font: var(--t-small);
+}
+.record > svg {
+  color: var(--red-ink);
+}
+.record button {
+  background: var(--paper-sunken);
+  padding: 4px;
+}
+.drop {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--paper);
+  border: 2px dashed var(--line-hover);
+  border-radius: 16px;
+}
+.error {
+  font: var(--t-caption);
+  color: var(--red-ink);
+}
+.target {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+@media (max-width: 700px) {
+  .box {
+    padding: 0 9px max(7px, env(safe-area-inset-bottom));
+  }
+  .tool {
+    min-width: 29px;
+    padding: 0 5px;
+  }
+  .modes button {
+    min-height: 34px;
+  }
+  .zoeTool {
+    height: 30px;
+  }
+  .box form textarea {
+    font-size: 16px;
+  }
+  .strip button {
+    min-height: 28px;
+  }
+  .shortcut {
+    display: none;
+  }
+  .strip button {
+    margin-left: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .box * {
+    transition: none !important;
+  }
+}
+.products {
+  display: grid;
+  gap: 6px;
+  max-height: min(40dvh, 350px);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+.quantity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font: var(--t-small-strong);
+}
+.products button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: left;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+.products button:not(:disabled):hover,
+.products button:focus-visible {
+  border-color: var(--line-hover);
+  background: var(--paper-hover);
+}
+.productImage {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--paper-sunken);
+  border-radius: 8px;
+}
+.products button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.productName,
+.productPrice {
+  display: grid;
+  gap: 3px;
+}
+.productName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.productPrice {
+  margin-left: auto;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.products strong,
+.products b {
+  font: var(--t-small-strong);
+}
+.products small {
+  font: var(--t-caption);
+  color: var(--muted);
+}
+.products b {
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .products button {
+    transition: none;
+  }
+}
+@media (max-width: 1199px) {
+  .tool > span {
+    display: none;
+  }
+}
+@media (min-width: 1200px) {
+  .tool > span {
+    font: var(--t-caption);
+  }
+}
+@media (max-width: 860px) and (max-height: 500px) {
+  .box { max-height: 55%; padding-bottom: max(4px, env(safe-area-inset-bottom)); }
+  .box textarea { min-height: 32px; max-height: 64px; }
+  .modes { padding-block: 2px; }
+}
+
+@media (max-width: 700px) {
+  .quantity [data-stepper] { min-height: 46px; }
+  .quantity [data-stepper] button { min-width: 44px; }
+  .quantity input { font-size: 16px; }
+}

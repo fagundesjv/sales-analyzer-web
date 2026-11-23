@@ -1,0 +1,7 @@
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sales-section);
+  width: 100%;
+  min-width: 0;
+}

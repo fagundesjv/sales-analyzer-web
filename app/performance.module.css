@@ -1,0 +1,177 @@
+.panel {
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  overflow: hidden;
+}
+.panel > header {
+  padding: var(--sales-card-pad) var(--sales-card-pad) 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.kicker,
+.inputs,
+.sale,
+.axis,
+.team button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.kicker,
+.axis,
+.team small,
+.sale small,
+.chart > span,
+.list > p {
+  font: var(--t-small);
+  color: var(--muted);
+}
+.panel h2 {
+  font: 550 clamp(25px, 3vw, 38px) / 1.1 var(--font);
+  letter-spacing: -0.055em;
+  margin: 8px 0;
+}
+.panel h3 {
+  font: var(--t-body-strong);
+  margin: 0 0 8px;
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(180px, 0.8fr);
+  gap: var(--sales-grid-gap);
+  padding: 10px var(--sales-card-pad) var(--sales-card-pad);
+}
+.chart {
+  min-width: 0;
+}
+.chart > strong,
+.chart > span {
+  display: block;
+}
+.chart > strong {
+  font: 550 clamp(28px, 4vw, 48px) / 1.2 var(--font);
+  letter-spacing: -0.055em;
+  margin-bottom: 4px;
+}
+.plot {
+  height: 92px;
+  display: grid;
+  grid-template-columns: repeat(var(--days), minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 16px;
+  background: repeating-linear-gradient(
+    to top,
+    var(--line-soft) 0 1px,
+    transparent 1px 31px
+  );
+}
+.plot button {
+  background: none;
+  border: 0;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  min-width: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.plot button i {
+  display: block;
+  width: min(65%, 27px);
+  background: var(--green-ink);
+  border-radius: 3px 3px 0 0;
+}
+.plot button i[data-empty="true"] {
+  background: var(--line-strong);
+}
+.plot button:hover,
+.plot button[aria-pressed="true"] {
+  background: var(--paper-hover);
+}
+.axis {
+  justify-content: space-between;
+  margin-top: 7px;
+}
+.team {
+  padding: 14px;
+  background: var(--paper-sunken);
+  border: 1px solid var(--line-soft);
+  border-radius: 13px;
+}
+.team button,
+.sale {
+  width: 100%;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  justify-content: space-between;
+  background: transparent;
+  padding: 9px;
+  font: var(--t-small);
+}
+.team button[aria-pressed="true"] {
+  border-radius: 7px;
+  background: var(--paper-hover);
+  font-weight: 600;
+}
+.team small {
+  display: block;
+  margin: 10px 6px 0;
+}
+.list {
+  border-top: 1px solid var(--line-soft);
+  padding: 16px var(--sales-card-pad);
+}
+.sale {
+  justify-content: start;
+  border-top: 1px solid var(--line-soft);
+  gap: 12px;
+}
+.sale > span {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+}
+.sale:hover {
+  background: var(--paper-hover);
+}
+.inputs {
+  flex-wrap: wrap;
+}
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .team button {
+    min-height: 36px;
+  }
+}
+.profile {
+  margin: 0 var(--sales-card-pad) var(--sales-grid-gap);
+  border-top: 1px solid var(--line-soft);
+  padding-top: 13px;
+}
+.profile summary {
+  cursor: pointer;
+  font: var(--t-body-strong);
+}
+.profile b {
+  float: right;
+  font-variant-numeric: tabular-nums;
+}
+.profile p,
+.profile a {
+  font: var(--t-small);
+  color: var(--text);
+}
+.profile a {
+  display: block;
+  border-top: 1px solid var(--line-soft);
+  text-decoration: none;
+  padding: 9px 0;
+}

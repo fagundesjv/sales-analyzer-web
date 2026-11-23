@@ -1,0 +1,162 @@
+/*
+ * Two regions side by side that trade their room without a cut. Alone, the first one takes
+ * everything; when the second one comes, the first narrows to its own width while the second
+ * grows from nothing. New in this project; it goes to the Design System later.
+ */
+.duo {
+  position: relative;
+  display: flex;
+  box-sizing: border-box;
+  min-width: 0;
+  /* The height the frame leaves to a work area that fills the sheet. */
+  height: calc(100dvh - var(--sales-keyboard, 0px) - var(--topbar-h, 0px));
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+ * The first region starts from its own width and grows into whatever is free. With the second
+ * one open it stops growing: the free room goes over to the other side, a little at a time.
+ */
+.start {
+  flex: 1 1 var(--duo-start);
+  min-width: 0;
+  min-height: 0;
+}
+
+.duo[data-open] .start {
+  flex-grow: 0;
+}
+
+.end {
+  position: relative;
+  flex: 0 1 0px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.duo[data-open] .end {
+  flex-grow: 1;
+}
+
+.duo[data-ready] .start,
+.duo[data-ready] .end {
+  transition: flex-grow var(--dur-3) var(--ease-move);
+}
+
+/*
+ * What the second region holds is laid out at the width it will have, from the first moment:
+ * the region uncovers it as it grows, and nothing in it is rearranged on the way.
+ */
+.endInner {
+  box-sizing: border-box;
+  width: calc(var(--duo-width, 100vw) - var(--duo-start) - 1px);
+  height: 100%;
+  min-height: 0;
+}
+
+/* The line between the regions: one pixel to the eye, twelve to the hand. */
+.handle {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 1px;
+  background: var(--line);
+  cursor: col-resize;
+  touch-action: none;
+  transition: background var(--dur-1) var(--ease-out);
+}
+
+.handle::before {
+  position: absolute;
+  inset: 0 -6px;
+  content: "";
+}
+
+.handle:hover,
+.duo[data-dragging] .handle {
+  background: var(--line-hover);
+  box-shadow: 0 0 0 1px var(--line-hover);
+}
+
+.handle:focus-visible {
+  outline: none;
+  background: var(--focus-color);
+  box-shadow: 0 0 0 1px var(--focus-color);
+}
+
+/* Alone, the first region has no line beside it. */
+.duo:not([data-open]) .handle {
+  visibility: hidden;
+}
+
+/* While the line is dragged the regions follow the hand at once. */
+.duo[data-dragging] .start,
+.duo[data-dragging] .end {
+  transition: none;
+}
+
+.duo[data-dragging] {
+  cursor: col-resize;
+  user-select: none;
+}
+
+/* ——— A narrow window: one region at a time, each sliding in from its side ——— */
+.switch {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  height: var(--h-lg);
+  padding: 0 var(--s-3);
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.duo[data-narrow] .start,
+.duo[data-narrow] .end {
+  position: absolute;
+  inset: 0;
+  flex: none;
+  background: var(--paper);
+  transition:
+    translate var(--dur-3) var(--ease-move),
+    visibility 0s linear var(--dur-3);
+}
+
+.duo[data-narrow][data-open] .start,
+.duo[data-narrow][data-open] .end {
+  top: var(--h-lg);
+}
+
+.duo[data-narrow] .endInner {
+  width: 100%;
+}
+
+.duo[data-narrow][data-front="end"] .start {
+  visibility: hidden;
+  translate: -100% 0;
+}
+
+.duo[data-narrow][data-front="start"] .end {
+  visibility: hidden;
+  translate: 100% 0;
+}
+
+.duo[data-narrow][data-front="start"] .start,
+.duo[data-narrow][data-front="end"] .end {
+  visibility: visible;
+  translate: 0 0;
+  transition: translate var(--dur-3) var(--ease-move);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .duo .start,
+  .duo .end,
+  .handle {
+    transition: none;
+  }
+}

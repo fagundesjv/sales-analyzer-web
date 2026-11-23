@@ -1,0 +1,31 @@
+.choices {
+  display:grid;
+  gap:var(--s-1);
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+.choices button {
+  display:grid;
+  gap:var(--s-1);
+  width:100%;
+  padding:var(--s-3);
+  border:0;
+  border-radius:var(--r-md);
+  background:transparent;
+  color:var(--ink);
+  text-align:start;
+  font:inherit;
+  cursor:pointer;
+}
+.choices button:hover, .choices button:focus-visible {background:var(--well)}
+.choices small, .source small, .facts dt {color:var(--muted)}
+.source {display:grid;gap:var(--s-3);justify-items:start}
+.source h3, .source blockquote {margin:0}
+.source blockquote {border-inline-start:2px solid var(--line);padding-inline-start:var(--s-3);white-space:pre-wrap;overflow-wrap:anywhere}
+.facts {display:flex;flex-wrap:wrap;gap:var(--s-3) var(--s-6);margin:var(--s-3) 0}
+.facts dt {font-size:12px}
+.facts dd {margin:var(--s-1) 0 0;font-weight:600;font-variant-numeric:tabular-nums}
+.links {display:flex;flex-wrap:wrap;gap:var(--s-2) var(--s-4)}
+.links a, .target {color:var(--ink);text-underline-offset:3px}
+.target {overflow:hidden;max-width:50%;white-space:nowrap;text-overflow:ellipsis;border:0;background:transparent;text-decoration:underline;font:inherit;cursor:pointer}
