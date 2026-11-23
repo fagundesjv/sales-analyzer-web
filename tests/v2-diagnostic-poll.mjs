@@ -99,7 +99,8 @@ async function verify(width) {
 
     for(const status of [403,404,429,500]) {
       const id=await open(["running",status]);
-      await page.getByRole("alert").getByText("Falha de leitura "+status).waitFor();
+      if (status===404) await page.getByText("Leitura indisponível",{exact:true}).waitFor();
+      else await page.getByRole("alert").getByText("Falha de leitura "+status).waitFor();
       await page.clock.runFor(8000);assert.equal(count(id),2);
     }
     const firstRead=await open([503],false);
@@ -120,7 +121,7 @@ async function verify(width) {
         if(change==="conta") user={...user,id:randomUUID()}; else workspace={...workspace,id:randomUUID()};
         steps=[404];
         await page.evaluate(()=>window.dispatchEvent(new Event("sa2-session-changed")));
-        await page.getByRole("alert").getByText("Falha de leitura 404").waitFor();
+        await page.getByText("Leitura indisponível",{exact:true}).waitFor();
       }
       await page.clock.runFor(12000);
       assert.equal(reads.filter(r=>r.id===id && r.context===previousContext).length,2,change);

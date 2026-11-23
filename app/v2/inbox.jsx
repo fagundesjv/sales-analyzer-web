@@ -1,14 +1,16 @@
 "use client";
 import {useEffect, useRef, useState} from "react";
-import {Button, SearchField} from "@content-ventures/design-system/v3";
-import {ArrowLeft, CalendarClock, Star, CheckCheck, ChevronRight, CircleMinus, Trophy} from "lucide-react";
+import {Button, ButtonLink, SearchField} from "@content-ventures/design-system/v3";
+import {ArrowLeft, CalendarClock, CheckCheck, ChevronRight, CircleMinus, MessageCircle, ScanText, SearchX, Star, Trophy} from "lucide-react";
 import {IconAction} from "../../src/ui/os/icon-action";
 import {FocusBar, ScheduleReturn} from "./seller-work";
 import {Pills} from "../../src/ui/os/pills";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
+import {EmptyState, FirstAccess} from "../../src/ui/os/empty-state";
 import {inboxHref} from "../../lib/inbox";
 import {money, parseMoney} from "../../lib/operation";
 import {useV2Action, useV2Page, useV2Read} from "../../lib/v2-client";
+import {connectionNextStep} from "./connection-next-step";
 import {ReaisField} from "../operation-fields";
 import {OutcomeCelebration} from "../outcome-celebration";
 import {ContactMark} from "../recovery-desk";
@@ -16,12 +18,22 @@ import {initials, outcomes} from "./work-queue";
 import {CursorNav, ReadState} from "./read-state";
 import {AttendanceComposer, conversationMessages, receiptLabel} from "./attendance";
 import css from "../customer-inbox.module.css";
+import first from "./inbox-onboarding.module.css";
 
 const choices = [
   {status:"won",label:"Venda ganha",icon:Trophy},
   {status:"lost",label:"Venda perdida",icon:CircleMinus},
   {status:"resolved",label:"Resolver conversa",icon:CheckCheck},
 ];
+
+function InboxOnboarding({session, lines}) {
+  const step = connectionNextStep(session.workspace.role === "manager", lines);
+  return <FirstAccess icon={MessageCircle} preview="inbox" headingId="inbox-first-title"
+      title={step.title} description={step.description}
+      action={<ButtonLink variant="primary" shape="pill" href={step.href}>
+        {step.href === "#whatsapps" ? <span className={first.whatsapp} aria-hidden="true" /> : <ScanText aria-hidden="true" />}
+        {step.label}</ButtonLink>} />;
+}
 function OutcomeDialog({item, context, confirming, close, saved, reload}) {
   const [status, setStatus] = useState("");
   const [amount, setAmount] = useState("");
@@ -78,7 +90,7 @@ function Thread({item, context, session, refresh, focus, evidence}) {
   return <article className={css.thread} aria-label={"Atendimento de " + item.title}>
     <header className={css.threadHead}><a className={css.back} href="#entrada" aria-label="Voltar à lista de conversas"><ArrowLeft size={19} /></a>
       <span className={css.headerMark}><ContactMark s={{tone:"sage",initials:initials(item.title)}} /></span>
-      <div className={css.identity}><div className={css.identityLine}><h2>{item.title}</h2></div><small>{item.source === "synthetic" ? "Conversa de exemplo" : "WhatsApp · Evolution API"}</small></div>
+      <div className={css.identity}><div className={css.identityLine}><h2>{item.title}</h2></div><small>{item.source === "synthetic" ? "Conversa de exemplo" : "WhatsApp"}</small></div>
       <div className={css.threadUtilities}><IconAction className={css.headTool} disabled={favorite.pending}
         aria-label={item.favorite ? "Remover dos favoritos" : "Favoritar conversa"} aria-pressed={item.favorite}
         onClick={() => favorite.run("conversations/" + item.id + "/favorite","PUT",{favorite:!item.favorite},() => refresh())}>
@@ -103,7 +115,8 @@ function Thread({item, context, session, refresh, focus, evidence}) {
           <small>{outbound ? "Equipe" : "Cliente"} · {new Date(entry.at).toLocaleString("pt-BR")}
             {entry.receipt && " · "+receiptLabel(entry.receipt.status,info?.mode)}</small><p>{msg.text}</p>
         </div>;
-      }) : <p>Nenhuma evidência disponível.</p>}
+      }) : <EmptyState size="compact" icon={MessageCircle} preview="inbox" title="Sem mensagens nesta leitura"
+        description="Os trechos de conversa disponíveis aparecerão aqui após a análise." />}
       {outcome && <section className={css.brief} aria-label="Desfecho registrado"><h3>{outcomes[outcome.status]}</h3>
         {outcome.status === "won" && <p>{money(outcome.amountCents)} · {outcome.confirmedAt ? "Ganho confirmado" : "Aguardando confirmação do gestor"}</p>}
         {outcome.status === "lost" && <p>{outcome.lossReason}</p>}
@@ -139,17 +152,24 @@ export function ConnectedInbox({revision: listRevision, id, validId, context, se
   const [revision, setRevision] = useState(0);
   const [celebrate, setCelebrate] = useState(null);
   const detail = useV2Read(validId ? "conversations/" + id : null, context, revision);
-  const focus = useV2Read("focus",context);
+  const pendingSearch = search.trim() !== query;
+  const firstAccess = !id && !search.trim() && !query && filter === "all" &&
+    inbox.data?.items.length === 0 && !inbox.previous && !inbox.next;
+  const connections = useV2Read(firstAccess ? "connections?limit=100" : null,context,listRevision);
+  const focus = useV2Read(!firstAccess && (validId || inbox.confirmed) ? "focus" : null,context);
   const focusAction = useV2Action(context);
   const open = target => {location.hash = inboxHref(target);};
   const bar = <FocusBar read={focus} action={focusAction} currentId={validId ? id : null}
-    candidate={detail.data?.id || inbox.data?.items[0]?.id} onOpen={open} />;
+    candidate={detail.data?.id || (!pendingSearch && inbox.data?.items[0]?.id)} onOpen={open} />;
   const mobileThread = mobile && !!id;
+  if (!id && !inbox.confirmed) return <ReadState read={inbox} />;
+  if (firstAccess) return <ReadState full read={connections}>{data =>
+    <InboxOnboarding session={session} lines={data.items} />}</ReadState>;
   return <div className={css.inbox} data-thread={!!id}>
     <section className={css.list} aria-label="Lista de atendimentos"><div className={css.listHead}>{!mobileThread && bar}
       <SearchField label="Buscar conversas" value={search} maxLength={80} onValueChange={setSearch} placeholder="Buscar conversas…" /><Pills size="sm" label="Filtro da caixa" value={filter} onChange={setFilter}
         items={[{value:"all",label:"Todas"},{value:"fav",label:"Favoritas"}]} /></div>
-      <div className={css.rows}><ReadState read={inbox}>{({items:matches}) => {
+      <div className={css.rows}><ReadState retain pending={pendingSearch} read={inbox}>{({items:matches}) => {
         return matches.length ? matches.map(item => <a className={css.row} href={inboxHref(item.id)}
           key={item.id} aria-current={id === item.id || undefined} onClick={e => {
             const round = focus.data?.round;
@@ -159,12 +179,28 @@ export function ConnectedInbox({revision: listRevision, id, validId, context, se
           }}><span className={css.rowMark}>
             <ContactMark s={{tone:"sage",initials:initials(item.title)}} /></span><span className={css.rowText}>
             <span className={css.rowTitle}><strong>{item.title}</strong>{item.favorite && <Star size={11} aria-label="Favorita" fill="currentColor" />}</span><small>{item.summary}</small></span></a>) :
-          <p className={css.empty}>Nenhuma conversa identificada para este recorte.</p>;
-      }}</ReadState><CursorNav page={inbox} label="Páginas da caixa de entrada" /></div>
+          <EmptyState size="compact" icon={query || filter !== "all" ? SearchX : MessageCircle}
+            title={query || filter !== "all" ? "Nenhuma conversa encontrada" : inbox.previous ? "Esta página está vazia" :
+              "As conversas aparecerão aqui"}
+            description={query || filter !== "all" ? "Tente outro nome ou mostre todas as conversas." :
+              inbox.previous ? "Volte para a página anterior." : session.workspace.role === "manager" ?
+              "Conecte um WhatsApp e analise as mensagens para começar." :
+              "Peça ao gestor para atribuir uma linha à sua conta."}
+            action={query || filter !== "all" ? <Button size="sm" variant="secondary"
+              onClick={() => {setSearch("");setQuery("");setFilter("all");}}>Mostrar todas</Button> :
+              inbox.previous ? <Button size="sm" variant="secondary" onClick={inbox.previous}>Página anterior</Button> :
+              <ButtonLink href="#whatsapps" size="sm" variant="secondary">Ver WhatsApps</ButtonLink>} />;
+      }}</ReadState><CursorNav page={inbox} pending={pendingSearch} label="Páginas da caixa de entrada" /></div>
     </section>
-    <div className={css.read}>{!id ? <p className={css.blank}>Selecione uma conversa para ver as evidências.</p> :
+    <div className={css.read}>{!id ? <EmptyState icon={MessageCircle}
+      title={inbox.data?.items.length === 0 && !query && filter === "all" ? "Sua caixa está pronta" : "Escolha uma conversa"}
+      description={inbox.data?.items.length === 0 && !query && filter === "all" ?
+        "Quando as mensagens forem analisadas, você verá aqui o histórico e os próximos passos." :
+        "Selecione um contato da lista para ver as mensagens, o risco e o desfecho."} /> :
       !validId ? <p>Conversa inválida. <a href="#entrada">Voltar à lista</a></p> :
-      <ReadState read={detail}>{item => <Thread key={item.id} evidence={evidence} focus={mobileThread ? bar : null} item={item} context={context} session={session} refresh={value => {
+      <ReadState read={detail} notFound={<EmptyState size="compact" icon={MessageCircle} title="Conversa indisponível"
+        description="Consulte as conversas disponíveis para sua conta."
+        action={<ButtonLink href="#entrada" size="sm">Voltar às conversas</ButtonLink>} />}>{item => <Thread key={item.id} evidence={evidence} focus={mobileThread ? bar : null} item={item} context={context} session={session} refresh={value => {
         setRevision(n => n + 1); refresh();
         if (value && !value.confirmedAt && ["won","resolved"].includes(value.status))
           setCelebrate({status:value.status,at:value.recordedAt});

@@ -47,6 +47,9 @@ async function scenario(width) {
     if (evidence) await page.screenshot({path:evidence+"/"+name+"-"+width+".png",animations:"disabled"});
   }
   try {
+    await page.goto(origin+"/#dashboard");
+    await page.locator(".sales-location").getByText("Dashboard",{exact:true}).waitFor();
+    assert.equal(await exact("V2 · Homologação").count(),0);
     await page.goto(origin+"/#uso");
     await exact(blockText).waitFor();
     await amount("Saldo disponível","US$ 0,00");
@@ -68,8 +71,8 @@ async function scenario(width) {
     await capture("uso-medido",tariff);
 
     await period.fill(month(2));
-    await exact("A análise dos diagnósticos usa uma tarifa simulada.").waitFor();
-    await tariff.waitFor(); // Selected month and current tariff may have different modes.
+    await exact("Os valores deste ciclo são estimativas calculadas sem medição do provedor.").waitFor();
+    await exact("Tarifa usada na estimativa").waitFor();
     await capture("uso-simulado",exact("Custo de execução"));
     const api = "**/api/v2/budget/usage?*";
     async function changeReading(transform) {
@@ -87,7 +90,7 @@ async function scenario(width) {
       delete data.cost.blockedReason;
       data.currentTariff.tokenizer="utf8-bytes-v1";
     });
-    await exact("Tarifa simulada vigente").click();
+    await exact("Tarifa usada na estimativa").click();
     await amount("Limite de entrada","8.192 bytes UTF-8");
     await changeReading(data => {
       data.commercial={limitCalls:null,consumedCalls:0,reservedCalls:0};
@@ -97,6 +100,16 @@ async function scenario(width) {
     });
     await period.fill(month(3));
     await exact("Ciclo sem histórico").waitFor();
+    await changeReading(data => {
+      data.mode="local_simulated";
+      data.commercial={limitCalls:0,consumedCalls:0,reservedCalls:0};
+      data.cost={currency:"USD",limitMicros:null,availableMicros:null,settledMicros:"0",
+        reservedMicros:"0",indeterminateMicros:"0",authorizedCount:0,indeterminateCount:0,settledCount:0};
+      data.currentTariff=null;
+    });
+    await exact("Nenhum custo de execução foi registrado neste ciclo.").waitFor();
+    assert.equal(await exact("Tarifa usada na estimativa").count(),0);
+    await exact("Sem orçamento configurado para este ciclo").waitFor();
     for (const invalid of [{workspaceId:"outra-empresa"},{period:month(1)},{scope:"outro"},{mode:"desconhecido"}]) {
       await changeReading(data => Object.assign(data,invalid));
       await page.getByRole("alert").filter({hasText:/outra empresa ou período|incompatível/}).waitFor();
@@ -120,7 +133,7 @@ async function scenario(width) {
     const sellerUsage=[];
     page.on("request",r => {if(r.url().includes("/api/v2/budget/usage")) sellerUsage.push(r.method());});
     await page.goto(origin+"/?perfil=vendedor#uso");
-    await exact("Somente gestores podem consultar o uso da empresa.").waitFor();
+    await exact("Uso disponível para gestores").waitFor();
     assert.deepEqual(sellerUsage,[]);
     assert.deepEqual(unexpected,[]);
     console.log(JSON.stringify({revision:health.revision,width,simulated:true,metered:true,blockedAvailable:"0",

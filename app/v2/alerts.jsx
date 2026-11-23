@@ -1,11 +1,13 @@
 "use client";
 import {useState} from "react";
 import {Button, List, ListItem} from "@content-ventures/design-system/v3";
-import {Bell} from "lucide-react";
-import {DetailPage, DetailSection, DetailText} from "../../src/ui/os/detail";
+import {Bell, SearchX} from "lucide-react";
+import {DetailPage, DetailSection} from "../../src/ui/os/detail";
 import {Pills} from "../../src/ui/os/pills";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
+import {EmptyState} from "../../src/ui/os/empty-state";
 import {useV2Action, useV2Page, useV2Read} from "../../lib/v2-client";
+import {RadarEmpty, useRadarEmpty} from "./radar-empty";
 import {CursorNav, ReadState} from "./read-state";
 import s from "./alerts.module.css";
 
@@ -87,14 +89,24 @@ export function ConnectedAlerts({session,context}) {
   if (readFilter!=="all") params.set("read",readFilter);
   if (kind) params.set("kind",kind);
   const page=useV2Page(params.size ? "alerts?"+params : "alerts",context);
+  const baselineEmpty = !params.size && !page.previous && page.data?.items.length === 0;
+  const empty = useRadarEmpty(baselineEmpty,session,context,"alerts");
   function saved() {
     setRules(false);
     setNotice("Regras salvas.");
     page.first();
   }
+  function openRules() {setNotice("");setRules(true);}
+  const dialog = rules && <Rules context={context} close={()=>setRules(false)} saved={saved} />;
+  if (!page.confirmed || (!params.size && !page.previous && page.loading && page.previousData?.items.length === 0 && !rules))
+    return <ReadState read={page} />;
+  if (baselineEmpty && !empty.data) return <ReadState read={empty} />;
+  if (baselineEmpty)
+    return <><RadarEmpty kind="alerts" step={empty.data.step}
+      openRules={manager ? openRules : undefined} notice={notice} />{dialog}</>;
   return <div data-stable-phone-tabs><DetailPage title="Alertas" icon={Bell}
-    description={session.workspace.name} actions={manager &&
-      <Button variant="secondary" onClick={()=>{setNotice("");setRules(true);}}>Regras de alerta</Button>}>
+    actions={manager &&
+      <Button variant="secondary" onClick={openRules}>Regras de alerta</Button>}>
     {notice && <p role="status">{notice}</p>}
     <DetailSection title="Alertas ativos">
       <div className={s.toolbar}>
@@ -107,11 +119,15 @@ export function ConnectedAlerts({session,context}) {
         </select></label>
       </div>
       <CursorNav label="Páginas de alertas" page={page} className={s.pager} />
-      <ReadState read={page}>{data=>data.items.length ? <List label="Lista de alertas">
+      <ReadState retain read={page}>{data=>data.items.length ? <List label="Lista de alertas">
         {data.items.map(alert=><AlertItem alert={alert} key={alert.id+":"+(alert.readAt??"")} context={context}
           changed={()=>{if (readFilter!=="all") page.retry();}} />)}
-      </List> : <DetailText>Nenhum alerta neste recorte.</DetailText>}</ReadState>
+      </List> : <EmptyState icon={SearchX}
+        title={page.previous ? "Esta página está vazia" : "Nenhum alerta com estes filtros"}
+        description={page.previous ? "Volte para a página anterior de alertas." : "Tente outra combinação de leitura e tipo."}
+        action={<Button variant="secondary" size="sm" onClick={page.previous || (() => {setReadFilter("all");setKind("");})}>
+          {page.previous ? "Página anterior" : "Limpar filtros"}</Button>} />}</ReadState>
     </DetailSection>
-    {rules && <Rules context={context} close={()=>setRules(false)} saved={saved} />}
+    {dialog}
   </DetailPage></div>;
 }

@@ -5,10 +5,11 @@ import {Building2, Users} from "lucide-react";
 import {SalesFrame} from "../sales-frame";
 import {settingsSections} from "../settings-home";
 import {DetailPage, DetailRows, DetailText} from "../../src/ui/os/detail";
+import {EmptyState, FirstAccess} from "../../src/ui/os/empty-state";
 import {useV2Action, useV2Page, useV2Read} from "../../lib/v2-client";
 import skin from "../../src/ui/os/os-theme.module.css";
 import gate from "../portal.module.css";
-import {CursorNav, ReadState} from "./read-state";
+import {CursorNav, LoadingSurface, ReadState} from "./read-state";
 import {ReadOnlyTeamDirectory} from "../team-directory";
 import {ConnectedDashboard, ConnectedRadar, Diagnostics} from "./work-queue";
 import {ConnectedChannels} from "./channels";
@@ -61,7 +62,7 @@ function Login({onLogin}) {
 
 function Company({session, context, onSwitch}) {
   const action = useV2Action(context);
-  return <DetailPage title="Empresa" icon={Building2} description="Empresa ativa nesta sessão">
+  return <DetailPage title="Empresa" icon={Building2} >
     <DetailRows items={[{label:"Empresa", value:session.workspace.name},
       {label:"Conta", value:session.user.email},
       {label:"Acesso", value:session.workspace.role === "manager" ? "Gestor" : "Vendedor"}]} />
@@ -77,13 +78,21 @@ function Company({session, context, onSwitch}) {
 function ConnectedTeam({session,context}) {
   const manager = session.workspace.role === "manager";
   const page = useV2Page(manager ? "team" : null,context);
-  return <DetailPage title="Equipe" icon={Users} description={session.workspace.name}
-    actions={manager && <InviteSeller workspace={session.workspace} context={context} />}>
+  if (manager && !page.confirmed) return <ReadState read={page} />;
+  if (manager && !page.previous && page.data?.items.length === 0)
+    return <FirstAccess icon={Users} preview="team" title="Sua equipe começa aqui"
+      description="Convide o primeiro vendedor para acompanhar as conversas da empresa."
+      action={<InviteSeller workspace={session.workspace} context={context} />} />;
+  return <DetailPage title="Equipe" icon={Users}
+    actions={manager && page.data?.items.length > 0 && <InviteSeller workspace={session.workspace} context={context} />}>
     {manager ? <>
-      <ReadState read={page}>{({items}) => items.length ? <ReadOnlyTeamDirectory members={items} /> :
-        <DetailText>{page.previous ? "Nenhum integrante nesta página." : "Nenhum integrante nesta empresa."}</DetailText>}</ReadState>
+      <ReadState retain read={page}>{({items}) => items.length ? <ReadOnlyTeamDirectory members={items} /> :
+        <EmptyState icon={Users} title="Esta página está vazia" description="Volte para conferir os integrantes anteriores."
+          action={<Button size="sm" variant="secondary" onClick={page.previous}>Página anterior</Button>} />}</ReadState>
       <CursorNav page={page} label="Páginas da equipe" />
-    </> : <DetailText>Somente gestores podem consultar a equipe da empresa.</DetailText>}
+    </> : <EmptyState icon={Users} size="section" title="Equipe disponível para gestores"
+      description="O gestor da empresa administra convites e integrantes. Você pode consultar seus dados na página Empresa."
+      action={<ButtonLink href="#empresa" variant="secondary" size="sm">Abrir empresa</ButtonLink>} />}
   </DetailPage>;
 }
 function Workspace({session, onSession, route, dark, changeTheme}) {
@@ -105,7 +114,7 @@ function Workspace({session, onSession, route, dark, changeTheme}) {
   let content;
   if (page === "dashboard" || page === "resultados")
     content = <ConnectedDashboard radar={radar} context={context} session={session} gains={page === "resultados"} />;
-  else if (isRadar) content = <ConnectedRadar key={page} context={context} title={title} />;
+  else if (isRadar) content = <ConnectedRadar key={page} context={context} session={session} title={title} />;
   else if (isChat) content = <ConnectedZoe route={route} session={session} context={context} history={chatHistory} />;
   else if (isInbox) content = <ConnectedInbox revision={revision} id={detailId}
     validId={uuid.test(detailId || "")} context={context} session={session} refresh={refresh}
@@ -122,7 +131,7 @@ function Workspace({session, onSession, route, dark, changeTheme}) {
   else if (page === "alertas") content = <ConnectedAlerts session={session} context={context} />;
   else if (page === "catalogo") content = <ConnectedCatalog session={session} context={context} />;
   else if (page === "plano") content = <ConnectedCredits session={session} context={context} />;
-  else content = <DetailPage title={title}><DetailText>Esta área ainda aguarda integração com o backend da V2.</DetailText>
+  else content = <DetailPage title={title}><DetailText>Esta área ainda não está disponível.</DetailText>
     <a href="#radar">Abrir Radar</a></DetailPage>;
   return <SalesFrame route={route} area={area} title={title} live={{session, logout:signOut}} threads={{}}
     chatHistory={isChat && <ZoeHistory history={chatHistory} route={route} />}
@@ -160,11 +169,11 @@ export function IntegratedSales() {
       {route === "convite" && session !== undefined ? <AcceptInvitation session={session} key={session?.user.id || "guest"}
         onSwitch={value => {announceSessionChange();setSession(value);jump("dashboard");}}
         showCompanies={() => {setSession(undefined);setEpoch(v => v + 1);jump("empresa");}} /> :
-        session ? <Workspace key={session.user.id + session.workspace.id} session={session} onSession={setSession}
+        session ? <Workspace key={[session.user.id,session.workspace.id,session.workspace.role].join("/")} session={session} onSession={setSession}
         route={route} dark={dark} changeTheme={() => {localStorage.setItem("sales-v2-integrated-theme", dark ? "light" : "dark"); setDark(!dark);}} /> :
         session === null ? route === "recuperar" ? <PasswordRecovery /> :
           <Login onLogin={value => {announceSessionChange(); setSession(value);}} /> :
-        <div className={gate.gate} data-sales-mode="integrated"><ReadState read={initial}>{() => <p>Carregando empresa…</p>}</ReadState></div>}
+        <div className={gate.gate} data-sales-mode="integrated">{initial.error && initial.error.status !== 401 ? <ReadState read={initial} /> : <LoadingSurface full />}</div>}
     </ThemeV3>
   </ThemeV3>;
 }
