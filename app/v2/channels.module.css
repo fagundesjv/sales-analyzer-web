@@ -8,6 +8,9 @@
 .connector p, .lines small, .code figcaption { color: var(--muted); font: var(--t-small); }
 .lines { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-2); }
 .lines li > span { display: grid; gap: 4px; overflow-wrap: anywhere; }
+.pairing { display: grid; justify-items: start; align-content: start; gap: var(--s-3); min-width: 0; }
+.pairing p { margin: 0; font: var(--t-body); color: var(--muted); }
+.pairing .code { justify-self: stretch; }
 .code { display: grid; justify-items: center; text-align: center; gap: var(--s-3); }
 .code img { max-width: 100%; height: auto; padding: 10px; background: white; border-radius: var(--r-md); }
 
@@ -37,7 +40,7 @@
 .activity dd, .saved { font: var(--t-small-strong); overflow-wrap: anywhere; }
 @media (max-width: 600px) {
   .create input, .create select { min-height: 44px; font-size: 16px; }
-  .create > button { width: 100%; }
+  .create > button, .pairing > button { width: 100%; min-height: 44px; }
   .fields { grid-template-columns: minmax(0, 1fr); }
   .fields input, .fields select { min-height: 44px; font-size: 16px; }
   .editor > button { width: 100%; }

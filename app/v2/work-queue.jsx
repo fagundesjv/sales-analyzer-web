@@ -3,7 +3,7 @@ import {useEffect, useState} from "react";
 import {Button, ButtonLink, MeterList, SearchField} from "@content-ventures/design-system/v3";
 import {ArrowUpRight, ChartColumn, MessageCircle, Radar, ScanText, SearchX, TrendingUp, Trophy} from "lucide-react";
 import {money} from "../../lib/operation";
-import {selfServeWhatsApp} from "../../lib/v2-capabilities";
+import {canCreateWhatsApp,isWhatsAppLine} from "../../lib/v2-capabilities";
 import {inboxHref} from "../../lib/inbox";
 import {useV2Action, useV2Page, useV2Read} from "../../lib/v2-client";
 import diagnosticStyles from "./diagnostic-actions.module.css";
@@ -214,6 +214,7 @@ function DiagnosticResult({job, tracking = false}) {
   </>;
 }
 export function Diagnostics({connections, context, initialId, manager}) {
+  const selfServeWhatsApp = canCreateWhatsApp(manager,connections.data);
   const storageKey = "sa2-diagnostic/" + context;
   const [selection, setSelection] = useState(() => ({id:initialId || sessionStorage.getItem(storageKey),context}));
   const id = selection?.id;
@@ -242,11 +243,11 @@ export function Diagnostics({connections, context, initialId, manager}) {
   const lookupId = manager && !connections.loading && !listedRunLine && run.data?.reconcileHours ? run.data.connectionId : null;
   const lineStatus = useV2Read(lookupId ? "connections/" + lookupId + "/status" : null,context);
   const retryLine = listedRunLine || (lookupId && lineStatus.data?.connectionId === lookupId ?
-    {id:lookupId,source:lineStatus.data.source,name:lineStatus.data.name} : null);
+    {id:lookupId,source:lineStatus.data.source,channel:lineStatus.data.channel,name:lineStatus.data.name} : null);
   const startError = startErrors[action.errorCode] ?? action.error;
   const blocked = Object.hasOwn(startErrors,action.errorCode);
   function reviewReconciliation(line, hours = 1) {
-    if (manager && line?.source === "evolution" && !waiting && !action.pending && !verifyCost) {
+    if (manager && isWhatsAppLine(line) && !waiting && !action.pending && !verifyCost) {
       action.clearError();
       setConfirmation({line,hours});
     }
@@ -266,7 +267,7 @@ export function Diagnostics({connections, context, initialId, manager}) {
   function start(connectionId, reconcileHours = null) {
     if (waiting || action.pending || verifyCost) return;
     if (reconcileHours !== null && (!manager || confirmation?.line.id !== connectionId ||
-        confirmation.line.source !== "evolution" || ![1,6,24].includes(reconcileHours))) return;
+        !isWhatsAppLine(confirmation.line) || ![1,6,24].includes(reconcileHours))) return;
     const published = [run.data,...(history.data?.items ?? [])].find(job =>
       job?.connectionId === connectionId && job.status === "completed" && job.report);
     const body = reconcileHours === null ? {connectionId} : {connectionId,reconcileHours};
@@ -300,7 +301,7 @@ export function Diagnostics({connections, context, initialId, manager}) {
         </select></label>
         <div className={diagnosticStyles.actions}>{formAction && <Button type="submit" disabled={action.pending || !!waiting || history.loading}>
           {partialHere && !current?.reconcileHours ? "Continuar leitura desta linha" : "Iniciar diagnóstico"}</Button>}
-          {manager && activeLine?.source === "evolution" && !verifyCost && !(retryHere && current?.reconcileHours) &&
+          {manager && isWhatsAppLine(activeLine) && !verifyCost && !(retryHere && current?.reconcileHours) &&
             <Button type="button" variant="secondary" disabled={action.pending || !!waiting || history.loading}
               onClick={() => reviewReconciliation(activeLine)}>Conciliar histórico</Button>}
         </div>
@@ -319,7 +320,7 @@ export function Diagnostics({connections, context, initialId, manager}) {
         action={<ButtonLink href="#diagnosticos" size="sm" onClick={() => {setSelection(null);sessionStorage.removeItem(storageKey);}}>Voltar aos diagnósticos</ButtonLink>} />}>{job => <>
         <p role="status">{job.reconcileHours && `Conciliação · ${job.reconcileHours} h · `}{runLabels[job.status]}{run.reconnecting && " · Restabelecendo conexão…"}</p><DiagnosticResult job={job} tracking />
         {!verifyCost && (job.status === "failed" || (job.status === "completed" && job.report?.hasBacklog === true)) &&
-          (job.reconcileHours ? manager && retryLine?.source === "evolution" &&
+          (job.reconcileHours ? manager && isWhatsAppLine(retryLine) &&
             <Button disabled={action.pending} onClick={() => reviewReconciliation(retryLine,job.reconcileHours)}>Revisar e repetir conciliação</Button> :
             <Button disabled={action.pending} onClick={() => start(job.connectionId)}>
             {action.pending ? "Enfileirando…" : job.status === "failed" ? "Tentar diagnóstico novamente" : "Continuar leitura desta linha"}

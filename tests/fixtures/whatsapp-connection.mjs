@@ -2,6 +2,7 @@
 import {randomUUID} from "node:crypto";
 import {deflateSync} from "node:zlib";
 import qr from "qrcode-generator";
+import {fixtureSchedule} from "./diagnostic-schedule.mjs";
 import {json,startFixtureWeb} from "./web-bff.mjs";
 
 const code=qr(0,"M");
@@ -38,50 +39,84 @@ async function bodyOf(req) {
   for await (const chunk of req) chunks.push(chunk);
   return JSON.parse(Buffer.concat(chunks).toString());
 }
-export async function startConnectionFixture(bundle,{role="manager"}={}) {
+export async function startConnectionFixture(bundle,{role="manager",port=0,localhostAlias=false,workspaceId=randomUUID(),lines=[],schedules=new Map()}={}) {
   const user={id:randomUUID(),name:"Pessoa de teste",email:"teste@example.test"};
-  const workspace={id:randomUUID(),role,name:"Operação fictícia"};
+  const workspace={id:workspaceId,role,name:"Operação fictícia"};
   const seller={id:randomUUID(),name:"Ana Vendedora",role:"seller"};
   const context=user.id+"/"+workspace.id;
-  const state={line:null,seller,creates:[],provisions:[],pairings:0,pairingFails:false};
-  const web=await startFixtureWeb(bundle,0,async(req,res,path) => {
+  const state={lines,user,workspace,seller,creates:[],provisions:[],pairings:0,teamReads:0,
+    capability:role==="manager",creationStatus:"provisioning",provisionStatus:"disconnected"};
+  const reservations=new Map();
+  function addLine(fields={}) {
+    const line={id:randomUUID(),name:"Linha de teste",source:"whatsapp",channel:"whatsapp",
+      status:"disconnected",ownerId:user.id,workspaceId:workspace.id,...fields};
+    state.lines.push(line);
+    return line;
+  }
+  const visibleLines=()=>state.lines.filter(line=>line.workspaceId===workspace.id && (role==="manager" || line.ownerId===user.id));
+  const receipt=line=>({connectionId:line.id,name:line.name,ownerId:line.ownerId,channel:line.channel,status:line.status});
+  const denied=res=>json(res,403,{error:{code:"forbidden",message:"Acesso indisponível."}});
+  const web=await startFixtureWeb(bundle,port,async(req,res,path) => {
     if (path==="session") return json(res,200,{user,workspace,workspaces:[workspace]});
-    if (req.headers["x-v2-context"]!==context) return json(res,403,{});
+    if (req.headers["x-v2-context"]!==context) return denied(res);
     if (path==="team" && req.method==="GET") {
+      state.teamReads++;
+      if (role!=="manager") return denied(res);
       const after=new URL(req.url,"http://localhost").searchParams.has("cursor");
       return json(res,200,after ? {items:[seller],nextCursor:null} :
         {items:[{id:user.id,name:user.name,role}],nextCursor:user.id});
     }
-    if (path==="connections" && req.method==="GET")
-      return json(res,200,{items:state.line?[state.line]:[],nextCursor:null});
+    if (path==="connections" && req.method==="GET") return json(res,200,{
+      items:visibleLines().map(({workspaceId,...line})=>line),nextCursor:null,
+      ...(state.capability===undefined ? {} : {capabilities:{whatsappSelfServe:state.capability}}),
+    });
+    if (req.method==="GET" && ["radar","alerts","conversations","diagnostics"].includes(path))
+      return json(res,200,{items:[],nextCursor:null});
+    if (path==="alerts/settings")
+      return role==="manager" && req.method==="GET" ? json(res,200,{risk:true,loss:true,disconnected:true,version:1}) : denied(res);
+    if (path==="summary") return json(res,200,{conversations:0,opportunities:0,
+      pendingWins:{count:0,amountCents:"0"},confirmedWins:{count:0,amountCents:"0"}});
     if (path==="connections" && req.method==="POST") {
-      if (role!=="manager") return json(res,403,{});
-      const body=await bodyOf(req);
-      state.creates.push({body,key:req.headers["idempotency-key"]});
-      if (!state.line) state.line={id:randomUUID(),name:body.name,channel:"whatsapp",status:"provisioning"};
-      return json(res,202,{connectionId:state.line.id,name:state.line.name,channel:"whatsapp",status:"provisioning"});
+      if (role!=="manager" || state.capability!==true) return denied(res);
+      const body=await bodyOf(req), key=req.headers["idempotency-key"];
+      state.creates.push({body,key});
+      if (state.limitReached) return json(res,409,{error:{code:"line_limit",message:"Limite de linhas de WhatsApp atingido."}});
+      const old=reservations.get(key);
+      if (old && (old.name!==body.name || old.ownerId!==(body.ownerId??user.id)))
+        return json(res,409,{error:{code:"idempotency_conflict",message:"Solicitação já utilizada."}});
+      const line=old || addLine({name:body.name,ownerId:body.ownerId??user.id,status:state.creationStatus});
+      reservations.set(key,line);
+      if (state.loseReceipt) {
+        state.loseReceipt=false;
+        return json(res,503,{error:{code:"temporarily_unavailable",message:"A confirmação está indisponível."}});
+      }
+      return json(res,line.status==="provisioning" ? 202 : 201,receipt(line));
     }
-    if (!state.line) return json(res,404,{});
-    const prefix="connections/"+state.line.id;
-    if (path===prefix+"/provision" && req.method==="POST") {
-      if (role!=="manager") return json(res,403,{});
+    const [,id,operation]=path.split("/");
+    const line=visibleLines().find(item=>item.id===id);
+    if (!line || !path.startsWith("connections/")) return json(res,404,{});
+    if (operation==="provision" && req.method==="POST") {
+      if (role!=="manager" || state.capability!==true) return denied(res);
       state.provisions.push({body:await bodyOf(req),key:req.headers["idempotency-key"]});
-      state.line.status="disconnected";
-      return json(res,201,{connectionId:state.line.id,name:state.line.name,channel:"whatsapp",status:state.line.status});
+      line.status=state.provisionStatus;
+      return json(res,line.status==="provisioning"?202:200,receipt(line));
     }
-    if (path===prefix+"/status" && req.method==="GET")
-      return json(res,200,{connectionId:state.line.id,channel:"whatsapp",status:state.line.status});
-    if (path===prefix+"/pairing" && req.method==="POST") {
-      if (role!=="manager") return json(res,403,{});
+    if (operation==="status" && req.method==="GET")
+      return json(res,200,{connectionId:line.id,source:line.source,channel:line.channel,status:line.status});
+    if (operation==="pairing" && req.method==="POST") {
+      if (role!=="manager") return denied(res);
       state.pairings++;
       if (state.pairingFails) return json(res,502,{error:{code:"evolution_unavailable",message:"Falha na instância Evolution da V2."}});
-      state.line.status="connecting";
-      return json(res,200,{connectionId:state.line.id,channel:"whatsapp",status:"connecting",qrDataUrl});
+      line.status="connecting";
+      return json(res,200,{connectionId:line.id,source:line.source,channel:"whatsapp",status:line.status,qrDataUrl});
     }
-    if (path===prefix+"/diagnostic-schedule" && req.method==="GET")
-      return json(res,200,{connectionId:state.line.id,enabled:false,localTime:"09:00",
-        timeZone:"America/Sao_Paulo",version:0,nextRunAt:null,lastEvaluatedAt:null,lastDecision:null,lastDiagnosticId:null});
+    if (operation==="diagnostic-schedule") {
+      // A shared line has one schedule across roles. Check write access for the current viewer.
+      if (req.method==="PUT" && role!=="manager") return denied(res);
+      if (!schedules.has(id)) schedules.set(id,fixtureSchedule(id,"manager"));
+      return schedules.get(id).handle(req,res);
+    }
     return json(res,404,{});
-  });
-  return {...web,state,context};
+  },{localhostAlias});
+  return {...web,state,context,addLine};
 }

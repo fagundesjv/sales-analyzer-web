@@ -63,6 +63,7 @@ function queryFor(path, method, raw) {
 }
 const cookieName = "sa2_session";
 const fail = (status, message) => Object.assign(new Error(message), {status});
+const resumeConnection = new RegExp("^connections/" + uuid + "/provision$");
 const upstreamDeadlines = new Map([
   ["team/invitations/accept", 35000],
   ["auth/recovery", 13000],
@@ -132,8 +133,11 @@ export function createV2Bff({apiOrigin, webOrigin, serviceKey, network = "loopba
       }
       const body = await bodyOf(req, req.method === "POST" && attendanceSend.test(path) ? 32 * 1024 : 8192);
       if (body !== undefined) headers["Content-Type"] = "application/json";
+      // Creation can require three sequential provider reads/writes before the API returns its receipt.
+      const preparingLine = req.method === "POST" && (path === "connections" || resumeConnection.test(path));
+      const deadline = preparingLine ? 25000 : upstreamDeadlines.get(path) ?? 9000;
       const upstream = (endpoint, options) => fetch(api.origin + "/v1/" + endpoint, {
-        headers, redirect: "error", signal: AbortSignal.timeout(upstreamDeadlines.get(path) ?? 9000), ...options,
+        headers, redirect: "error", signal: AbortSignal.timeout(deadline), ...options,
       });
       // The API checks the expected identity, workspace and role inside its resource transaction.
       if (usesSession && !logout && path !== "session") {

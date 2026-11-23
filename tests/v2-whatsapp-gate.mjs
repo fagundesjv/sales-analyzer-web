@@ -1,6 +1,5 @@
 // Production-default capability: existing lines may pair; new line creation stays hidden.
 import assert from "node:assert/strict";
-import {randomUUID} from "node:crypto";
 import {chromium} from "playwright";
 import {startConnectionFixture} from "./fixtures/whatsapp-connection.mjs";
 
@@ -10,7 +9,7 @@ const browser=await chromium.launch({channel:"chrome"});
 try {
   for(const width of [1440,390]) for(const role of ["manager","seller"]) {
     const fixture=await startConnectionFixture(bundle,{role});
-    fixture.state.line={id:randomUUID(),name:"Linha cadastrada",source:"evolution",status:"disconnected"};
+    fixture.addLine({name:"Linha cadastrada",source:"evolution",channel:undefined});
     const ctx=await browser.newContext({viewport:{width,height:width===390?844:900},serviceWorkers:"block"});
     const page=await ctx.newPage();
     page.setDefaultTimeout(8000);

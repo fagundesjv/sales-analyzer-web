@@ -84,10 +84,16 @@ async function verify(width,role) {
       await reopen();await text("Pausado").waitFor();await text("Sem execução agendada").waitFor();
       await shot("gestor-pausada");
       state.readError=true;await reopen();await panel.getByRole("alert").waitFor();assert.equal(await toggle.count(),0);
+      state.readError=false;await btn("Tentar novamente").click();await text("Pausado").waitFor();
+      line.status="disconnected";
+      await page.getByRole("button",{name:"Atualizar estado"}).click();
       await page.getByRole("button",{name:"Gerar QR Code"}).click();
       await page.getByRole("img",{name:"QR Code de pareamento do WhatsApp"}).waitFor();
+      assert.equal(await panel.count(),0);
       assert.equal(state.pairings,1);
-      state.readError=false;await btn("Tentar novamente").click();await text("Pausado").waitFor();
+      line.status="connected";
+      await page.getByRole("button",{name:"Atualizar estado"}).click();
+      await text("Pausado").waitFor();
     } else {
       await text("06:00 · America/Sao_Paulo").waitFor();
       assert.equal(await toggle.count(),0);assert.equal(await time.count(),0);assert.equal(await zone.count(),0);
