@@ -64,6 +64,7 @@ async function scenario(role,width) {
       return json(res,200,{items:[{id:wonId,title:"Alerta existente",kind:"risk",raisedAt:"2026-11-20T12:00:00Z"}],nextCursor:null});
     if (path==="catalog/items" && state.catalog && query.get("kind")==="product" && !query.has("q") && !query.has("status"))
       return json(res,200,{items:[{id:wonId,name:"Produto existente",kind:"product",availability:"available",priceCents:null,aliases:[]}],nextCursor:null});
+    if(path==="diagnostics" && state.job) return json(res,200,{items:[state.job],nextCursor:null});
     if(["radar","returns","catalog/items","alerts","team","diagnostics","zoe/history"].includes(path))
       return json(res,200,empty);
     if(path==="pipelines") return json(res,200,{...empty,defaultPipelineId:null});
@@ -180,6 +181,25 @@ async function scenario(role,width) {
     await page.reload();
     await page.getByText("Sua linha está pronta para a primeira análise",{exact:true}).waitFor();
     await page.getByRole("link",{name:"Iniciar diagnóstico"}).waitFor();
+    for (const [hash,title] of [["radar","Veja quais conversas retomar primeiro"],["oportunidades","Acompanhe suas primeiras negociações"]]) {
+      await open(hash,title,false);
+      await page.getByRole("link",{name:"Iniciar diagnóstico"}).waitFor();
+      for (const [status,heading,action] of [["queued","Leitura na fila","Acompanhar leitura"],
+        ["running","A Zoe está analisando as conversas","Acompanhar leitura"],
+        ["failed","A última leitura foi interrompida","Ver diagnóstico"],
+        ["completed",hash==="radar"?"Nenhuma conversa para priorizar":"Nenhuma negociação identificada","Ver última leitura"]]) {
+        state.job={id:wonId,connectionId:state.line.id,status};
+        await page.reload();
+        await page.getByRole("heading",{name:heading,exact:true}).waitFor();
+        assert.equal(await page.getByRole("link",{name:action,exact:true}).getAttribute("href"),"#diagnosticos/"+wonId);
+        assert.equal(await page.getByRole("link",{name:"Iniciar diagnóstico",exact:true}).count(),0);
+      }
+      state.job=null;
+    }
+    await open("alertas","Nenhum alerta por enquanto",false);
+    assert.equal(await page.getByRole("link",{name:"Iniciar diagnóstico",exact:true}).count(),0);
+    if(role==="manager")await page.getByRole("button",{name:"Regras de alerta",exact:true}).waitFor();
+    await page.goto(web.origin+"/#entrada");
     state.conversations=[{id:randomUUID(),title:"Marina Costa",summary:"Pedido de orçamento",priority:"high"}];
     await page.reload();
     await page.getByPlaceholder("Buscar conversas…").waitFor();

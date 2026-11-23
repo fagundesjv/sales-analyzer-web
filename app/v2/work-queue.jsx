@@ -136,7 +136,7 @@ export function ConnectedRadar({context,session,title}) {
   }
   const priorities = title === "Radar";
   const baselineEmpty = !pending && !params.size && !radar.previous && radar.data?.items.length === 0;
-  const empty = useRadarEmpty(baselineEmpty,session,context);
+  const empty = useRadarEmpty(baselineEmpty,session,context,priorities ? "radar" : "deals");
   if (!radar.confirmed) return <ReadState read={radar} />;
   if (baselineEmpty && !empty.data) return <ReadState read={empty} />;
   if (baselineEmpty) return <RadarEmpty kind={priorities ? "radar" : "deals"} step={empty.data.step} />;

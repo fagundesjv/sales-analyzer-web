@@ -90,7 +90,7 @@ export function ConnectedAlerts({session,context}) {
   if (kind) params.set("kind",kind);
   const page=useV2Page(params.size ? "alerts?"+params : "alerts",context);
   const baselineEmpty = !params.size && !page.previous && page.data?.items.length === 0;
-  const empty = useRadarEmpty(baselineEmpty,session,context);
+  const empty = useRadarEmpty(baselineEmpty,session,context,"alerts");
   function saved() {
     setRules(false);
     setNotice("Regras salvas.");
