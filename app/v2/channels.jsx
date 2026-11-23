@@ -4,7 +4,7 @@ import {Badge, Button, ButtonLink, Input} from "@content-ventures/design-system/
 import {Plug, QrCode, Smartphone} from "lucide-react";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
 import {DetailPage,DetailSection} from "../../src/ui/os/detail";
-import {EmptyState} from "../../src/ui/os/empty-state";
+import {EmptyState, FirstAccess} from "../../src/ui/os/empty-state";
 import {useV2Action,useV2Page,useV2Read} from "../../lib/v2-client";
 import {selfServeWhatsApp} from "../../lib/v2-capabilities";
 import {ReadState,CursorNav} from "./read-state";
@@ -131,12 +131,27 @@ export function ConnectedChannels({catalog,session,context,connections}) {
   const [line,setLine] = useState(null);
   const [creating,setCreating] = useState(false);
   const manager = session.workspace.role === "manager";
-  if (catalog) return <DetailPage title="Conectores" icon={Plug} description="Integrações de canais da operação.">
+  if (catalog) return <DetailPage title="Conectores" icon={Plug} >
     <section className={s.connector}><img width="32" height="32" src="/assets/whatsapp.svg" alt="" />
       <div><h2>WhatsApp</h2><p>Acompanhe os números da equipe e o estado de cada conexão.</p></div>
       <ButtonLink href="#whatsapps" variant="secondary">{manager ? "Gerenciar WhatsApps" : "Ver meus WhatsApps"}</ButtonLink>
     </section></DetailPage>;
-  return <DetailPage title="WhatsApps" icon={Smartphone} description="Acompanhe as linhas da empresa e o estado de cada conexão."
+  const dialogs = <>
+    {creating && selfServeWhatsApp && <CreateConnection session={session} context={context} onClose={() => setCreating(false)}
+      onUnconfirmed={connections.first} onCreated={created => {
+      setCreating(false);setLine(created);connections.first();
+    }} />}
+    {line && <ConnectionDialog key={line.id} line={line} session={session} context={context} update={connections.retry} onClose={() => setLine(null)} />}
+  </>;
+  if (!connections.previous && connections.data?.items.length === 0) return <>
+    <FirstAccess icon={Smartphone} preview="channels" title={manager && selfServeWhatsApp ?
+      "Conecte seu primeiro WhatsApp" : manager ? "WhatsApp ainda não configurado" : "Nenhum número atribuído"}
+      description={manager ? selfServeWhatsApp ? "Crie uma linha e escaneie o QR Code para analisar as conversas." :
+        "Solicite a configuração à equipe de implantação. Sua linha aparecerá aqui quando estiver disponível." :
+        "Peça ao gestor da empresa para conectar ou atribuir uma linha à sua conta."}
+      action={manager && selfServeWhatsApp && <Button variant="primary" icon={QrCode} onClick={() => setCreating(true)}>Conectar WhatsApp</Button>} />
+    {dialogs}</>;
+  return <DetailPage title="WhatsApps" icon={Smartphone}
     actions={manager && selfServeWhatsApp && connections.data?.items.some(c => c.channel === "whatsapp" || c.source === "evolution") &&
       <Button variant="primary" icon={QrCode} onClick={() => setCreating(true)}>Conectar WhatsApp</Button>}>
     <ReadState read={connections}>{({items}) => {
@@ -160,10 +175,6 @@ export function ConnectedChannels({catalog,session,context,connections}) {
       </>;
     }}</ReadState>
     <CursorNav page={connections} label="Páginas de conexões" />
-    {creating && selfServeWhatsApp && <CreateConnection session={session} context={context} onClose={() => setCreating(false)}
-      onUnconfirmed={connections.first} onCreated={created => {
-      setCreating(false);setLine(created);connections.first();
-    }} />}
-    {line && <ConnectionDialog key={line.id} line={line} session={session} context={context} update={connections.retry} onClose={() => setLine(null)} />}
+    {dialogs}
   </DetailPage>;
 }

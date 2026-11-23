@@ -169,3 +169,38 @@
   .illustrated.page > [data-preview] { width: min(100%, 284px); margin-bottom: 24px; }
   .illustrated.page .description { font-size: 15px; }
 }
+
+:global(.sales-page):has(> .first) {
+  display: flex; flex-direction: column; min-height: 100%;
+}
+.first {
+  display: grid; grid-template-rows: auto 1fr auto; align-items: center; justify-items: center;
+  flex: 1; width: 100%; min-width: 0; min-height: 100%; background: var(--paper);
+}
+:global(.sales-page) > .first { min-height: auto; }
+.first > .state { grid-row: 2; width: 100%; box-sizing: border-box; }
+.first > .tools { grid-row: 1; justify-self: end; }
+.first > p { grid-row: 3; }
+.first .action :is(button, a[href]) {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 40px; padding-inline: 18px; border-radius: 999px; border: 1px solid transparent;
+  font: 600 14px / 1.2 var(--font); background: var(--ink); color: var(--paper);
+}
+.first .action :is(button, a[href]):hover { background: color-mix(in srgb, var(--ink) 90%, var(--paper)); }
+@media (max-width: 700px) {
+  .first .action :is(button, a[href]), .tools :is(button,a[href]) { min-height: 44px; }
+}
+:global(.sales-page):has(:global(.settings-content) > .first) {
+  display: flex; flex-direction: column; min-height: 100%;
+}
+:global(.settings-layout):has(:global(.settings-content) > .first) {
+  flex: 1; align-items: stretch;
+}
+:global(.settings-content):has(> .first) { display: flex; flex-direction: column; }
+:global(.settings-content) > .first { min-height: auto; }
+@media (max-width: 860px) {
+  :global(.settings-layout):has(:global(.settings-content) > .first) {
+    display: flex; flex-direction: column;
+  }
+  :global(.settings-content):has(> .first) { flex: 1; }
+}

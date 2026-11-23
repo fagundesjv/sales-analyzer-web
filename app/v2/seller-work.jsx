@@ -6,9 +6,9 @@ import {IconAction} from "../../src/ui/os/icon-action";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
 import {DetailPage} from "../../src/ui/os/detail";
 import {Pills} from "../../src/ui/os/pills";
-import {EmptyState} from "../../src/ui/os/empty-state";
+import {EmptyState, FirstAccess} from "../../src/ui/os/empty-state";
 import {inboxHref,localDate} from "../../lib/inbox";
-import {useV2Action,useV2Page} from "../../lib/v2-client";
+import {useV2Action,useV2Page,useV2Read} from "../../lib/v2-client";
 import {CursorNav,ReadState} from "./read-state";
 import css from "../customer-inbox.module.css";
 import f from "../focus.module.css";
@@ -104,20 +104,27 @@ function ReturnRow({task,context,refresh}) {
 export function ConnectedReturns({context}) {
   const [view,setView] = useState("open");
   const page = useV2Page("returns?status=" + (view === "done" ? "completed" : "open") + (view === "today" ? "&throughDate=" + localDate() : ""),context);
-  return <DetailPage title="Retornos" icon={CalendarClock} description="Acompanhe a próxima ação combinada em cada conversa.">
+  const openIsEmpty = view === "open" && !page.previous && page.data?.items.length === 0;
+  const completed = useV2Read(openIsEmpty ? "returns?status=completed&limit=1" : null, context);
+  if (openIsEmpty && !completed.data) return <ReadState read={completed} />;
+  if (openIsEmpty && completed.data.items.length === 0) return <FirstAccess icon={CalendarDays} preview="returns"
+    title="Agenda livre" description="Agende seu próximo contato em uma conversa. Os retornos combinados com os clientes aparecem aqui."
+    action={<ButtonLink variant="primary" href="#entrada">Abrir conversas</ButtonLink>} />;
+  return <DetailPage title="Retornos" icon={CalendarClock}>
     <div className={a.agenda}><div className={a.toolbar}><Pills label="Agenda de retornos" value={view} onChange={setView}
       items={[{value:"open",label:"Em aberto"},{value:"today",label:"Até hoje"},{value:"done",label:"Concluídos"}]} /></div>
       <ReadState read={page}>{({items}) => items.length ? <ul className={a.list} aria-label="Retornos agendados">
         {items.map(task => <ReturnRow key={task.id} task={task} context={context} refresh={page.retry} />)}</ul> :
-        <EmptyState icon={CalendarDays} preview={view === "open" && !page.previous ? "returns" : undefined} title={page.previous ? "Esta página está vazia" :
-          view === "done" ? "Nenhum retorno concluído" : view === "today" ? "Tudo em dia por hoje" : "Agenda livre"}
+        <EmptyState icon={CalendarDays} title={page.previous ? "Esta página está vazia" :
+          view === "done" ? "Nenhum retorno concluído" : view === "today" ? "Tudo em dia por hoje" : "Nenhum retorno em aberto"}
           description={page.previous ? "Volte para os retornos da página anterior." :
             view === "done" ? "Os retornos concluídos aparecerão aqui." :
             view === "today" ? "Não há retornos pendentes até hoje. Confira os próximos da agenda." :
             "Agende o próximo contato diretamente em uma conversa."}
           action={page.previous ? <Button variant="secondary" size="sm" onClick={page.previous}>Página anterior</Button> :
             view === "today" ? <Button variant="secondary" size="sm" onClick={() => setView("open")}>Ver todos em aberto</Button> :
-            <ButtonLink href="#entrada" variant="secondary" size="sm">Abrir conversas</ButtonLink>} />}</ReadState>
+            <Button variant="secondary" size="sm" onClick={() => setView(view === "done" ? "open" : "done")}>
+              {view === "done" ? "Ver em aberto" : "Ver concluídos"}</Button>} />}</ReadState>
       <CursorNav page={page} label="Páginas de retornos" /></div>
   </DetailPage>;
 }

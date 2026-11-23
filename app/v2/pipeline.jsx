@@ -3,7 +3,7 @@ import {useEffect, useState} from "react";
 import {Button, ButtonLink, Input, PageHeader} from "@content-ventures/design-system/v3";
 import {ArrowUpRight, KanbanSquare, MessageCircle, SearchX} from "lucide-react";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
-import {EmptyState} from "../../src/ui/os/empty-state";
+import {EmptyState, FirstAccess} from "../../src/ui/os/empty-state";
 import {useV2Action, useV2Page, useV2Read} from "../../lib/v2-client";
 import {CursorNav, ReadState} from "./read-state";
 import boardStyle from "../recovery-desk.module.css";
@@ -163,14 +163,16 @@ export function ConnectedPipeline({session,context}) {
     setNotice(dialog?.kind==="pipeline" ? "Funil salvo." : "Negociação movida.");
     refresh();
   }
-  return <div className={boardStyle.desk} data-stable-phone-tabs>
-    <PageHeader title="Pipeline comercial" description="Acompanhe as negociações por etapa."
-      actions={<ButtonLink href="#tarefas" icon={MessageCircle}>Retornos agendados</ButtonLink>} />
-    {!id ? <ReadState read={directory}>{() => <EmptyState size="page" icon={KanbanSquare} preview="pipeline"
+  const editor = dialog?.kind==="pipeline" && <PipelineEditor existing={dialog.board} context={context}
+      close={() => setDialog(null)} save={saved} refresh={refresh} />;
+  if (!id) return <><ReadState read={directory}>{() => <FirstAccess icon={KanbanSquare} preview="pipeline"
       title="Organize as negociações por etapa"
       description={manager ? "Crie o primeiro funil para acompanhar as conversas analisadas." :
         "O gestor ainda não configurou um funil para esta empresa."}
-      action={manager ? <Button variant="primary" onClick={() => setDialog({kind:"pipeline"})}>Criar funil</Button> : null} />}</ReadState> : <>
+      action={manager && <Button variant="primary" onClick={() => setDialog({kind:"pipeline"})}>Criar funil</Button>} />}</ReadState>
+    {editor}</>;
+  return <div className={boardStyle.desk} data-stable-phone-tabs>
+    <PageHeader title="Pipeline comercial" actions={<ButtonLink href="#tarefas" icon={MessageCircle}>Retornos agendados</ButtonLink>} />
       <div className={pageStyle.toolbar}>
         <label>Funil<select aria-label="Funil" value={id} onChange={event => {setSelected(event.target.value);setNotice("");}}>
           {!directory.items.some(item => item.id===id) && <option value={id}>{board.data?.name ?? "Funil selecionado"}</option>}
@@ -200,9 +202,7 @@ export function ConnectedPipeline({session,context}) {
         {data.stages.map(stage => <Lane key={[id,owner,revision,stage.id].join("/")} stage={stage} boardId={id}
           owner={owner} context={context} showMove={card => setDialog({kind:"move",card,board:data})} />)}
       </div>}</ReadState>
-    </>}
-    {dialog?.kind==="pipeline" && <PipelineEditor existing={dialog.board} context={context}
-      close={() => setDialog(null)} save={saved} refresh={refresh} />}
+    {editor}
     {dialog?.kind==="move" && <MoveCard card={dialog.card} board={dialog.board} directory={directory} context={context}
       close={() => setDialog(null)} save={saved} refresh={refresh} />}
   </div>;

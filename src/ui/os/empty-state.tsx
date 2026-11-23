@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import {useId, type ReactNode} from "react";
 import {EmptyPreview, type PreviewKind} from "./empty-preview";
 import styles from "./empty-state.module.css";
 
@@ -40,4 +40,17 @@ export function EmptyState({
       {action ? <div className={styles.action}>{action}</div> : null}
     </div>
   );
+}
+
+/** Full-page first access, shared by every product area. Keep live list controls outside this state. */
+export function FirstAccess({tools, notice, headingId, ...props}: Omit<EmptyStateProps, "size"> & {
+  tools?: ReactNode;
+  notice?: string;
+}) {
+  const id = useId();
+  return <section className={styles.first} data-first-access="" data-stable-phone-tabs aria-labelledby={headingId || id}>
+    {tools && <div className={styles.tools}>{tools}</div>}
+    <EmptyState {...props} size="page" headingId={headingId || id} />
+    {notice && <p role="status">{notice}</p>}
+  </section>;
 }

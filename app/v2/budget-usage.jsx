@@ -88,7 +88,7 @@ export function BudgetUsage({session,context}) {
   const manager = session.workspace.role === "manager";
   const validPeriod = monthPattern.test(period) && period <= currentMonth;
   const usage = useV2Read(manager && validPeriod ? "budget/usage?period=" + period : null,context);
-  return <DetailPage title="Uso da empresa" icon={Activity} description={session.workspace.name}>
+  return <DetailPage title="Uso da empresa" icon={Activity}>
     {manager ? <>
       <label className="op-field" data-stable-phone-tabs>Mês de referência (UTC)
         <input type="month" value={period} min="1000-01" max={currentMonth} onChange={event => setPeriod(event.target.value)} />

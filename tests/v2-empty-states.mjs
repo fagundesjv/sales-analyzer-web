@@ -10,7 +10,8 @@ assert.ok(bundle,"Informe o pacote Web compilado.");
 const selfServe=process.env.SA_EXPECT_WHATSAPP_SELF_SERVE==="1";
 const shots=process.env.SA_EVIDENCE_DIR;
 if (shots) await mkdir(shots,{recursive:true});
-const browser=await chromium.launch({channel:"chrome"});
+const preview=process.argv.includes("--preview");
+const browser=preview ? null : await chromium.launch({channel:"chrome"});
 const empty={items:[],nextCursor:null};
 
 async function scenario(role,width) {
@@ -18,7 +19,7 @@ async function scenario(role,width) {
   const workspace={id:randomUUID(),name:"Empresa de teste",role};
   const context=user.id+"/"+workspace.id;
   const wonId=randomUUID(), nextCursor=randomUUID(), pipelineId=randomUUID();
-  const state={line:null,conversations:[],wins:true,pipeline:false,loggedIn:true};
+  const state={line:null,conversations:[],wins:!preview,pipeline:false,loggedIn:true};
   const web=await startFixtureWeb(bundle,0,async (req,res,path)=>{
     if(path==="session" && !state.loggedIn) return json(res,401,{});
     if(path==="session") return json(res,200,{user,workspace,workspaces:[workspace]});
@@ -49,6 +50,17 @@ async function scenario(role,width) {
         commercial:{limitCalls:null,reservedCalls:0,consumedCalls:0},cost:{limitMicros:null,availableMicros:null,
           settledMicros:"0",reservedMicros:"0",indeterminateMicros:"0",authorizedCount:0,indeterminateCount:0,settledCount:0}});
     }
+    if(path==="alerts/settings") return json(res,role==="manager" ? 200 : 403,
+      role==="manager" ? {risk:true,loss:true,disconnected:true,version:1} : {error:{code:"forbidden"}});
+    const query=new URL(req.url,"http://localhost").searchParams;
+    if (path==="radar" && state.radar && !query.has("q") && !query.has("outcome"))
+      return json(res,200,{items:[{id:wonId,title:"Negociação em aberto",summary:"Pedido de orçamento",priority:"high"}],nextCursor:null});
+    if (path==="returns" && state.taskStatus===query.get("status") && !query.has("throughDate"))
+      return json(res,200,{items:[{id:wonId,conversationId:wonId,title:"Retorno existente",dueDate:"2027-01-10",status:state.taskStatus}],nextCursor:null});
+    if (path==="alerts" && state.alert && !query.has("kind") && !query.has("read"))
+      return json(res,200,{items:[{id:wonId,title:"Alerta existente",kind:"risk",raisedAt:"2026-11-20T12:00:00Z"}],nextCursor:null});
+    if (path==="catalog/items" && state.catalog && query.get("kind")==="product" && !query.has("q") && !query.has("status"))
+      return json(res,200,{items:[{id:wonId,name:"Produto existente",kind:"product",availability:"available",priceCents:null,aliases:[]}],nextCursor:null});
     if(["radar","returns","catalog/items","alerts","team","diagnostics","zoe/history"].includes(path))
       return json(res,200,empty);
     if(path==="pipelines") return json(res,200,{...empty,defaultPipelineId:null});
@@ -60,6 +72,10 @@ async function scenario(role,width) {
       reservedCalls:0,availableCalls:0,nextCycleStartsOn:"2026-12-01"});
     return json(res,404,{});
   });
+  if (preview) {
+    console.log("Prévia local do primeiro acesso · "+web.origin+"/#radar");
+    return;
+  }
   const ctx=await browser.newContext({viewport:{width,height:width===390?844:900},serviceWorkers:"block"});
   const page=await ctx.newPage();
   const errors=[];
@@ -68,11 +84,25 @@ async function scenario(role,width) {
   page.on("requestfailed",request=>{
     if(request.resourceType()==="stylesheet") errors.push("Stylesheet: "+request.url());
   });
+  async function checkFirstAccess(hash) {
+    const panel=page.locator("[data-first-access]");
+    if (!await panel.count()) return;
+    const preview=await panel.locator("[data-preview]").boundingBox();
+    assert.ok(Math.abs(preview.width-(width===390?284:354))<1,hash+" deve usar a escala de Conversas");
+    const action=panel.locator('[role="status"] + div').getByRole("link").or(
+      panel.locator('[role="status"] + div').getByRole("button"));
+    if (await action.count()===1) {
+      const box=await action.boundingBox();
+      assert.ok(box.height >= (width===390?44:40),hash+" deve manter a altura de toque");
+      assert.ok(Math.abs((box.x+box.width/2)-(preview.x+preview.width/2))<2,hash+" deve centralizar a ação");
+    }
+  }
   async function open(hash,title,capture=true) {
     await page.goto(web.origin+"/#"+hash);
     await page.getByText(title,{exact:true}).first().waitFor();
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),hash+" tem overflow");
     assert.doesNotMatch(await page.locator("body").innerText(),/evolution/i);
+    await checkFirstAccess(hash);
     if(shots && capture && !hash.includes("/"))
       await page.screenshot({path:shots+"/vazio-"+role+"-"+hash+"-"+width+".png",animations:"disabled"});
   }
@@ -83,11 +113,18 @@ async function scenario(role,width) {
       "WhatsApp ainda não configurado" : "Nenhum número atribuído",{exact:true}).waitFor();
     if(role==="manager" && !selfServe)
       assert.equal(await page.getByRole("button",{name:"Conectar WhatsApp"}).count(),0);
-    await open("radar","Ainda não há oportunidades analisadas");
+    await open("radar","Veja quais conversas retomar primeiro");
+    assert.equal(await page.getByRole("searchbox",{name:"Buscar oportunidade"}).count(),0);
+    const channelAction = role==="manager" ? selfServe ? "Conectar WhatsApp" : "Ver orientações de conexão" : "Ver meus WhatsApps";
+    assert.equal(await page.getByRole("link",{name:channelAction}).getAttribute("href"),"#whatsapps");
+    state.radar=true;
+    await page.reload();
+    await page.getByRole("link",{name:/Negociação em aberto/}).waitFor();
     await page.getByPlaceholder("Buscar contato ou sinal…").fill("inexistente");
     await page.getByText("Nenhuma oportunidade neste recorte",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Limpar filtros"}).click();
-    await page.getByText("Ainda não há oportunidades analisadas",{exact:true}).waitFor();
+    await page.getByRole("link",{name:/Negociação em aberto/}).waitFor();
+    state.radar=false;
     let release;
     state.delayList=new Promise(resolve=>{release=resolve;});
     try {
@@ -156,10 +193,20 @@ async function scenario(role,width) {
     state.line=null;
     await open("tarefas","Agenda livre");
     await open("catalogo","Seu catálogo começa aqui");
+    assert.equal(await page.getByPlaceholder("Buscar item…").count(),0);
+    if(role==="manager") {
+      await page.getByRole("button",{name:"Adicionar primeiro item"}).click();
+      await page.getByRole("dialog").getByLabel("Tipo",{exact:true}).selectOption("service");
+      await page.getByRole("dialog",{name:"Adicionar serviço"}).waitFor();
+      await page.keyboard.press("Escape");
+    }
+    state.catalog=true;
+    await page.reload();
+    await page.getByText("Produto existente",{exact:true}).first().waitFor();
     await page.getByPlaceholder("Buscar item…").fill("inexistente");
     await page.getByText("Nenhum item encontrado",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Limpar filtros"}).click();
-    await page.getByText("Seu catálogo começa aqui",{exact:true}).waitFor();
+    await page.getByText("Produto existente",{exact:true}).first().waitFor();
     if(role==="manager") {
       await page.getByRole("button",{name:"Adicionar produto"}).click();
       await page.getByRole("dialog").getByText("Adicionar produto",{exact:true}).first().waitFor();
@@ -169,7 +216,12 @@ async function scenario(role,width) {
       await page.getByRole("button",{name:"Criar funil"}).click();
       await page.getByRole("dialog").getByText("Novo funil",{exact:true}).waitFor();
     } else assert.equal(await page.getByRole("button",{name:"Criar funil"}).count(),0);
-    await open("alertas","Nenhum alerta por enquanto");
+    await open("alertas","Receba alertas da sua operação");
+    if (role==="manager") {
+      await page.getByRole("button",{name:"Regras de alerta"}).click();
+      await page.getByRole("dialog",{name:"Regras de alerta"}).getByText("Mostrar vendas em risco").waitFor();
+      await page.keyboard.press("Escape");
+    }
     await open("diagnosticos","Nenhuma conexão disponível");
     await page.goto(web.origin+"/#resultados");
     await page.getByRole("link",{name:/Venda anterior/}).waitFor();
@@ -192,6 +244,7 @@ async function scenario(role,width) {
       await open("uso","Uso disponível para gestores");
       await open("plano","Plano disponível para gestores");
     }
+    state.catalog=false;
     if(role==="manager" && width===390) {
       await open("catalogo","Seu catálogo começa aqui");
       await page.getByRole("switch",{name:"Tema escuro"}).click();
@@ -207,34 +260,40 @@ async function scenario(role,width) {
     const clickLink = label => page.getByRole("link",{name:label,exact:true}).last().click();
     const button = label => page.getByRole("button",{name:label,exact:true});
     if(role==="manager" && width===390) await page.getByRole("switch",{name:"Tema escuro"}).click();
-    await open("oportunidades","Nenhuma negociação identificada");
+    await open("oportunidades","Acompanhe suas primeiras negociações");
     await page.locator('[data-preview="deals"]').waitFor();
-    await clickLink("Abrir diagnósticos");
-    await visible("Nenhuma conexão disponível");
-    await clickLink("Ver WhatsApps");
+    await clickLink(channelAction);
     await page.locator('[data-preview="channels"]').waitFor();
     await open("conexao","WhatsApp");
     await clickLink(role==="manager" ? "Gerenciar WhatsApps" : "Ver meus WhatsApps");
     await page.locator('[data-preview="channels"]').waitFor();
 
     await open("tarefas","Agenda livre",false);
+    assert.equal(await button("Até hoje").count(),0);
+    await clickLink("Abrir conversas");
+    await visible("Toda conversa começa com uma conexão");
+    state.taskStatus="completed";
+    await open("tarefas","Nenhum retorno em aberto",false);
+    await button("Ver concluídos").click();
+    await page.getByRole("link",{name:"Retorno existente"}).waitFor();
+    state.taskStatus="open";
     await button("Até hoje").click();
     await visible("Tudo em dia por hoje");
     await button("Ver todos em aberto").click();
-    await visible("Agenda livre");
+    await page.getByRole("link",{name:"Retorno existente"}).waitFor();
     await button("Concluídos").click();
     await visible("Nenhum retorno concluído");
-    await clickLink("Abrir conversas");
-    await visible("Toda conversa começa com uma conexão");
-    await open("alertas","Nenhum alerta por enquanto",false);
+    await open("alertas","Receba alertas da sua operação",false);
+    assert.equal(await page.getByLabel("Tipo de alerta").count(),0);
+    state.alert=true;
+    await page.reload();
+    await page.getByRole("list",{name:"Lista de alertas"}).waitFor();
     await page.getByLabel("Tipo de alerta").selectOption("loss");
     await visible("Nenhum alerta com estes filtros");
-    assert.equal(await page.locator('[data-preview="alerts"]').count(),0);
     await button("Limpar filtros").click();
-    await clickLink("Abrir Radar");
-    await visible("Ainda não há oportunidades analisadas");
-
-    await open("catalogo","Seu catálogo começa aqui",false);
+    await page.getByRole("list",{name:"Lista de alertas"}).waitFor();
+    state.catalog=true;
+    await open("catalogo","Produto existente",false);
     await button("Serviços").click();
     await visible("Os serviços da equipe começam aqui");
     await page.locator('[data-preview="services"]').waitFor();
@@ -245,7 +304,7 @@ async function scenario(role,width) {
     state.wins=false;
     await open("resultados","Ganhos aparecerão aqui");
     await clickLink("Abrir Radar");
-    await visible("Ainda não há oportunidades analisadas");
+    await visible("Veja quais conversas retomar primeiro");
     await page.goto(web.origin+"/#conversa/"+wonId);
     await visible("Conversa indisponível");
     await clickLink("Voltar às conversas");
@@ -287,13 +346,13 @@ async function scenario(role,width) {
       await visible("Sua próxima oportunidade começa com uma análise");
       await open("equipe","Equipe disponível para gestores",false);
       await clickLink("Abrir empresa");
-      await visible("Empresa ativa nesta sessão");
+      await visible(workspace.name);
     }
-    await open("ajustes","Empresa ativa nesta sessão");
+    await open("ajustes",workspace.name);
     await clickLink("Aceitar convite de outra empresa");
     await visible("Aceitar convite");
     await clickLink("Voltar à minha empresa");
-    await visible("Empresa ativa nesta sessão");
+    await visible(workspace.name);
     state.loggedIn=false;
     await page.reload();
     await visible("Entrar no Sales Analyzer");
@@ -304,5 +363,9 @@ async function scenario(role,width) {
     console.log(JSON.stringify({role,width,revision:web.revision,overflow:false}));
   } finally {await ctx.close();await web.close();}
 }
-try {for(const width of [1440,390]) for(const role of ["manager","seller"]) await scenario(role,width);}
-finally {await browser.close();}
+if (preview) {
+  await scenario("manager",1440);
+} else {
+  try {for(const width of [1440,390]) for(const role of ["manager","seller"]) await scenario(role,width);}
+  finally {await browser.close();}
+}

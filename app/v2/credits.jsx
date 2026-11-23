@@ -16,7 +16,7 @@ export function ConnectedCredits({session, context}) {
   const manager=session.workspace.role==="manager";
   const read=useV2Read(manager?"credits":null,context);
   const exhausted=read.data?.availableCalls===0;
-  return <DetailPage title="Plano e créditos" icon={Layers} description={session.workspace.name}
+  return <DetailPage title="Plano e créditos" icon={Layers}
     status={manager && exhausted ? <Badge>Saldo esgotado</Badge> : undefined}
     actions={manager ? <ButtonLink href="#uso" variant="secondary">Ver uso da empresa</ButtonLink> : undefined}>
     <div className={planStyles.page}>

@@ -12,8 +12,9 @@ import {useDiagnosticRun} from "./use-diagnostic-run";
 import {Pills} from "../../src/ui/os/pills";
 import {StatTiles} from "../../src/ui/os/stat-tiles";
 import {DetailPage, DetailRows, DetailSection, DetailText} from "../../src/ui/os/detail";
-import {EmptyState} from "../../src/ui/os/empty-state";
+import {EmptyState, FirstAccess} from "../../src/ui/os/empty-state";
 import {DashboardVersion} from "../commercial-dashboard";
+import {RadarEmpty} from "./radar-empty";
 import {RadarBrief} from "../radar-reading";
 import {ContactMark} from "../recovery-desk";
 import {CursorNav, ReadState} from "./read-state";
@@ -52,8 +53,16 @@ export function ConnectedDashboard({radar, context, session, gains}) {
   const list = gains ? sales : radar;
   const firstAnalysis = summary.data?.conversations === 0;
   const manager = session.workspace.role === "manager";
+  if (firstAnalysis && !summary.data.opportunities && !summary.data.pendingWins.count && !summary.data.confirmedWins.count &&
+      !list.previous && list.data?.items.length === 0)
+    return <FirstAccess icon={gains ? Trophy : ChartColumn} preview={gains ? "gains" : "dashboard"}
+      title={gains ? "Ganhos aparecerão aqui" : "Sua próxima oportunidade começa com uma análise"}
+      description={gains ? "Registre a venda na conversa. O valor entra nos ganhos confirmados após a revisão do gestor." :
+        manager ? "Confira o WhatsApp da equipe para iniciar a primeira análise." : "Confira a linha atribuída à sua conta para começar."}
+      tools={<DashboardVersion integrated />} action={<ButtonLink variant="primary" href={gains ? "#radar" : "#whatsapps"}>
+        {gains ? "Abrir Radar" : "Ver WhatsApps"}</ButtonLink>} />;
   return <DetailPage title={gains ? "Ganhos" : "Panorama comercial"} icon={gains ? Trophy : ChartColumn}
-    description={session.workspace.name} actions={<DashboardVersion integrated />}><div className={d.dashboard}>
+    actions={<DashboardVersion integrated />}><div className={d.dashboard}>
     <ReadState read={summary}>{data => <StatTiles label="Operação comercial" columns={4} items={[
         {id:"all",label:"Conversas",value:data.conversations,href:"#entrada"},
         {id:"radar", label:"Oportunidades", value:data.opportunities, href:"#radar"},
@@ -80,24 +89,14 @@ export function ConnectedDashboard({radar, context, session, gains}) {
 const radarChoices = [{value:"all",label:"Todas"},{value:"open",label:"Em aberto"},{value:"won",label:"Ganhas"},
   {value:"lost",label:"Perdidas"},{value:"resolved",label:"Resolvidas"}];
 
-function RadarResults({path, context, priorities, clearFilters, onResults}) {
-  const radar = useV2Page(path,context);
-  useEffect(() => {
-    if (radar.data) onResults(!!clearFilters || radar.data.items.length > 0);
-  },[radar.data,clearFilters,onResults]);
+function RadarResults({radar, priorities, clearFilters}) {
   return <ReadState read={radar}>{({items}) => {
-      if (!items.length) return <>
-        <EmptyState icon={clearFilters ? SearchX : Radar} preview={clearFilters || radar.previous ? undefined : priorities ? "radar" : "deals"}
-          title={clearFilters ? "Nenhuma oportunidade neste recorte" : radar.previous ? "Esta página está vazia" :
-            priorities ? "Ainda não há oportunidades analisadas" : "Nenhuma negociação identificada"}
-          description={clearFilters ? "Tente outro contato ou situação para encontrar a negociação." :
-            radar.previous ? "Volte à página anterior para conferir as oportunidades." :
-            "Analise uma conexão em Diagnósticos para encontrar conversas com potencial de recuperação."}
-          action={clearFilters ? <Button variant="secondary" size="sm" onClick={clearFilters}>Limpar filtros</Button> :
-            radar.previous ? <Button variant="secondary" size="sm" onClick={radar.previous}>Página anterior</Button> :
-            <ButtonLink href="#diagnosticos" variant="primary" size="sm">Abrir diagnósticos</ButtonLink>} />
-        <CursorNav page={radar} label="Páginas do Radar" />
-      </>;
+      if (!items.length) return <EmptyState icon={SearchX}
+        title={radar.previous ? "Esta página está vazia" : "Nenhuma oportunidade neste recorte"}
+        description={radar.previous ? "Volte à página anterior para conferir as oportunidades." :
+          "Tente outro contato ou situação para encontrar a negociação."}
+        action={<Button variant="secondary" size="sm" onClick={radar.previous || clearFilters}>
+          {radar.previous ? "Página anterior" : "Limpar filtros"}</Button>} />;
       const open = items.filter(x => !x.outcome);
       const counts = radarChoices.slice(1).map(({value,label},i) => {
         const n = items.filter(x => (x.outcome?.status || "open") === value).length;
@@ -114,11 +113,10 @@ function RadarResults({path, context, priorities, clearFilters, onResults}) {
   }}</ReadState>;
 }
 
-export function ConnectedRadar({context,title}) {
+export function ConnectedRadar({context,session,title}) {
   const [text,setText] = useState("");
   const [q,setQ] = useState("");
   const [filter,setFilter] = useState("all");
-  const [hasResults,setHasResults] = useState(true);
   const term = text.trim();
   const pending = term !== q;
   useEffect(() => {
@@ -130,21 +128,25 @@ export function ConnectedRadar({context,title}) {
   if (q) params.set("q",q);
   if (filter !== "all") params.set("outcome",filter);
   const path = params.size ? "radar?" + params.toString() : "radar";
+  const radar = useV2Page(pending ? null : path,context);
   function clearFilters() {
     setText(""); setQ(""); setFilter("all");
   }
   const priorities = title === "Radar";
+  if (!pending && !params.size && !radar.previous && !radar.data)
+    return <ReadState read={radar} />;
+  if (!pending && !params.size && !radar.previous && radar.data?.items.length === 0)
+    return <ReadState read={radar}>{() => <RadarEmpty kind={priorities ? "radar" : "deals"}
+      session={session} context={context} />}</ReadState>;
   return <div className={r.radar} data-stable-phone-tabs><DetailPage
     title={priorities ? "Radar de recuperação" : title} icon={priorities ? Radar : TrendingUp}
-    description="Oportunidades identificadas nas conversas da empresa"
-    actions={hasResults && <ButtonLink variant="secondary" href="#diagnosticos">Abrir diagnósticos</ButtonLink>}>
+    actions={<ButtonLink variant="secondary" href="#diagnosticos">Abrir diagnósticos</ButtonLink>}>
     <div className="flow">
       <SearchField label="Buscar oportunidade" placeholder="Buscar contato ou sinal…" value={text} onValueChange={setText}
         maxLength={80} enterKeyHint="search" />
       <Pills label="Situação da negociação" items={radarChoices} value={filter} onChange={setFilter} />
       {pending ? <p role="status">Buscando oportunidades…</p> :
-        <RadarResults key={path} path={path} context={context} priorities={priorities}
-          clearFilters={params.size ? clearFilters : null} onResults={setHasResults} />}
+        <RadarResults radar={radar} priorities={priorities} clearFilters={clearFilters} />}
     </div></DetailPage></div>;
 }
 
@@ -281,7 +283,13 @@ export function Diagnostics({connections, context, initialId, manager}) {
       <Button size="sm" variant="ghost" disabled={action.pending || !!waiting} onClick={() => track(job)}>Acompanhar execução</Button>
     </details>;
   }
-  return <DetailPage title="Diagnósticos" icon={ScanText} description="Analise as conversas de uma conexão e acompanhe o processamento.">
+  if (!id && !connections.previous && connections.data?.items.length === 0)
+    return <FirstAccess icon={ScanText} preview="diagnostics" title="Nenhuma conexão disponível"
+      description={manager ? selfServeWhatsApp ? "Conecte um WhatsApp para analisar as conversas da operação." :
+        "Solicite a conexão do WhatsApp da equipe à implantação para iniciar o diagnóstico." :
+        "Peça ao gestor para atribuir uma linha à sua conta antes de iniciar uma análise."}
+      action={<ButtonLink variant="primary" href="#whatsapps">Ver WhatsApps</ButtonLink>} />;
+  return <DetailPage title="Diagnósticos" icon={ScanText} >
     <DetailSection title="Novo diagnóstico"><ReadState read={connections}>{({items}) => items.length ?
       <form className="flow" onSubmit={e => {e.preventDefault();if (formAction) start(activeLine.id);}}>
         <label className="op-field">Conexão <select aria-label="Conexão" value={activeLine.id} disabled={action.pending || !!waiting}

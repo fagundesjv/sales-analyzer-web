@@ -10,7 +10,7 @@ assert.equal(health.fixture,true);
 const evidence = process.env.SA_EVIDENCE_DIR;
 if (evidence) await mkdir(evidence,{recursive:true});
 const browser = await chromium.launch({channel:"chrome"});
-const summary = {conversations:0,opportunities:0,
+const summary = {conversations:1,opportunities:1,
   pendingWins:{count:0,amountCents:"0"},confirmedWins:{count:0,amountCents:"0"}};
 const emptyPage = {items:[],nextCursor:null};
 const radarPage = {items:[{id:"50000000-0000-4000-8000-000000000001",title:"Marina Costa",
@@ -31,7 +31,7 @@ try {
     await context.route("**/api/v2/summary",route => route.fulfill({json:summary}));
     await context.route(/\/api\/v2\/radar(?:\?.*)?$/,route => route.fulfill({json:radarPage}));
     await context.route("**/api/v2/conversations?*",route => route.fulfill({json:emptyPage}));
-    await context.route(/\/api\/v2\/alerts(?:\?.*)?$/,route => route.fulfill({json:emptyPage}));
+    await context.route(/\/api\/v2\/alerts(?:\?.*)?$/,route => route.fulfill({json:{items:[{id:"alerta-1",title:"Venda em risco",kind:"risk",fromHistory:true}],nextCursor:null}}));
     try {
       for (const [hash,title] of [["dashboard","Panorama comercial"],["resultados","Ganhos"],
         ["uso","Uso da empresa"],["diagnosticos","Diagnósticos"],
@@ -57,14 +57,14 @@ try {
         }
         if (["radar","oportunidades"].includes(hash)) {
           const head = heading.locator("xpath=ancestor::header[1]");
-          assert.equal(await head.getByText("Oportunidades identificadas nas conversas da empresa").count(),1,
-            title + " deve manter a descrição");
+          const headBox = await head.boundingBox();
+          assert.ok(headBox.height <= (width === 390 ? 110 : 70),title + " deve ter cabeçalho compacto");
           assert.equal(await head.getByRole("link",{name:"Abrir diagnósticos"}).getAttribute("href"),"#diagnosticos",
             title + " deve manter a ação");
           const search = page.getByPlaceholder("Buscar contato ou sinal…");
           await search.waitFor();
           const body = search.locator("xpath=ancestor::div[contains(@class, 'flow')][1]");
-          const [bodyBox,headBox] = await Promise.all([body.boundingBox(),head.boundingBox()]);
+          const bodyBox = await body.boundingBox();
           assert.ok(bodyBox.width >= headBox.width * 0.9,title + " deve ocupar a largura da página");
           await page.getByRole("link",{name:/Marina Costa/}).waitFor();
         }

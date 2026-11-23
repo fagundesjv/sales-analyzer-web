@@ -6,20 +6,21 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--sales-section);
+  gap: var(--s-4);
   min-width: 0;
 }
 
 .head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-1) var(--s-3);
   min-width: 0;
 }
 
 /* With no views under it, a line closes the head; the views bring their own. */
 .head[data-line] {
-  padding-bottom: var(--sales-section);
+  padding-bottom: var(--s-3);
   border-bottom: 1px solid var(--line);
 }
 
@@ -77,6 +78,7 @@
 }
 
 .description {
+  grid-column: 1;
   max-width: 76ch;
   margin: 0;
   font: 400 14px / 22px var(--font);
@@ -84,6 +86,7 @@
 }
 
 .actions {
+  grid-column: 2; grid-row: 1 / span 2; justify-content: end;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -255,4 +258,9 @@
   .status {
     flex: 1 0 100%;
   }
+}
+
+@media (max-width: 600px) {
+  .head { grid-template-columns: minmax(0,1fr); }
+  .actions { grid-column: 1; grid-row: auto; justify-content: start; }
 }

@@ -7,9 +7,9 @@ import {reaisFromCents, ReaisField} from "../operation-fields";
 import {DetailPage, DetailRows} from "../../src/ui/os/detail";
 import {Pills} from "../../src/ui/os/pills";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
-import {EmptyState} from "../../src/ui/os/empty-state";
+import {EmptyState, FirstAccess} from "../../src/ui/os/empty-state";
 import {parseMoney} from "../../lib/operation";
-import {useV2Action, useV2Page} from "../../lib/v2-client";
+import {useV2Action, useV2Page, useV2Read} from "../../lib/v2-client";
 import {CursorNav, ReadState} from "./read-state";
 import s from "../directory.module.css";
 import css from "./catalog.module.css";
@@ -86,11 +86,7 @@ function CatalogEditor({item, kind, manager, context, close, saved, reload}) {
   </ResponsiveDialog>;
 }
 
-function CatalogPage({path, context, kind, manager, view, open, filtered, clear, onInventory}) {
-  const page = useV2Page(path,context);
-  useEffect(() => {
-    if (page.data) onInventory(filtered || !!page.previous || page.data.items.length > 0);
-  },[page.data,filtered,page.previous,onInventory]);
+function CatalogPage({page, kind, manager, view, open, filtered, clear}) {
   return <>
     <ReadState read={page}>{({items}) => <div className={s.inventoryScroll} data-view={view}
       aria-label="Resultados do catálogo" role="region" tabIndex={0}>
@@ -123,7 +119,6 @@ export function ConnectedCatalog({context,session}) {
   const [filtersOpen,setFiltersOpen] = useState(false);
   const [editor,setEditor] = useState(null);
   const [revision,setRevision] = useState(0);
-  const [catalogHasItems,setCatalogHasItems] = useState(true);
   const [notice,setNotice] = useState("");
   const term = text.trim();
   useEffect(() => {
@@ -135,15 +130,36 @@ export function ConnectedCatalog({context,session}) {
   if (status) params.set("status",status);
   if (q) params.set("q",q);
   const path = itemsPath + "?" + params;
+  const page = useV2Page(term === q ? path : null,context,revision);
+  const emptyKind = !page.previous && !status && !text && !q && page.data?.items.length === 0;
+  const otherKind = kind === "product" ? "service" : "product";
+  const other = useV2Read(emptyKind ? itemsPath + "?kind=" + otherKind + "&limit=1" : null,context,revision);
+  const archived = useV2Read(emptyKind ? itemsPath + "?status=archived&limit=1" : null,context,revision);
   function clear() {setText("");setQ("");setStatus("");setNotice("");}
   function reload() {setRevision(old => old + 1);setEditor(null);}
-  return <div data-stable-phone-tabs><DetailPage title="Produtos e serviços" icon={Package} description={session.workspace.name}>
+  const dialog = editor && <CatalogEditor item={editor.item} kind={kind} manager={manager} context={context}
+      close={() => setEditor(null)} saved={(result,archived) => {
+        setNotice(result.name + (archived ? " foi arquivado." : editor.item ? " foi atualizado." : " foi adicionado."));
+        setKind(result.kind || kind);
+        reload();
+      }} reload={reload} />;
+  if (emptyKind) {
+    if (!other.data) return <ReadState read={other} />;
+    if (!archived.data) return <ReadState read={archived} />;
+    if (!other.data.items.length && !archived.data.items.length) return <>
+      <FirstAccess icon={Package} preview="catalog" title="Seu catálogo começa aqui" notice={notice}
+        description={manager ? "Cadastre um produto ou serviço para sua equipe consultar durante as conversas." :
+          "Os produtos e serviços aparecerão aqui quando o gestor cadastrar o primeiro item."}
+        action={manager && <Button variant="primary" icon={Plus} onClick={() => setEditor({item:null})}>Adicionar primeiro item</Button>} />
+      {dialog}</>;
+  }
+  return <div data-stable-phone-tabs><DetailPage title="Produtos e serviços" icon={Package}>
     <section className={s.directory} aria-label="Catálogo"><div className={s.head}>
       <Pills label="Tipo de item" items={kinds} value={kind} onChange={value => {setKind(value);clear();}} />
-      {manager && catalogHasItems && <Button icon={Plus} variant="primary" aria-label={"Adicionar " + noun(kind)}
+      {manager && !emptyKind && <Button icon={Plus} variant="primary" aria-label={"Adicionar " + noun(kind)}
         onClick={() => {setEditor({item:null});setNotice("");}}>Adicionar<span className={s.addNoun}>{" " + noun(kind)}</span></Button>}
     </div>
-    <div className={s.catalogTools} data-open={filtersOpen}>
+    {(!emptyKind || archived.data?.items.length > 0) && <div className={s.catalogTools} data-open={filtersOpen}>
       <SearchField label="Buscar no catálogo" placeholder="Buscar item…" value={text} maxLength={80} enterKeyHint="search"
         onValueChange={value => {setText(value);setNotice("");}} />
       <button type="button" className={s.filterToggle} aria-expanded={filtersOpen} aria-controls="v2-catalog-filter"
@@ -155,16 +171,12 @@ export function ConnectedCatalog({context,session}) {
         </select>
       </div>
       <CatalogViewSwitch view={view} onChange={setView} />
-    </div>
+    </div>}
     {notice && <p role="status" className={css.notice}>{notice}</p>}
-    {term !== q ? <p role="status">Buscando itens…</p> : <CatalogPage key={revision + path} path={path} context={context}
+    {term !== q ? <p role="status">Buscando itens…</p> : <CatalogPage page={page}
       kind={kind} manager={manager} view={view} open={item => {setEditor({item});setNotice("");}}
-      filtered={!!(q || status)} clear={clear} onInventory={setCatalogHasItems} />}
+      filtered={!!(q || status)} clear={clear} />}
     </section>
-    {editor && <CatalogEditor item={editor.item} kind={kind} manager={manager} context={context}
-      close={() => setEditor(null)} saved={(result,archived) => {
-        setNotice(result.name + (archived ? " foi arquivado." : editor.item ? " foi atualizado." : " foi adicionado."));
-        reload();
-      }} reload={reload} />}
+    {dialog}
   </DetailPage></div>;
 }

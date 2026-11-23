@@ -1,17 +1,1 @@
-.page {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  min-width: 0;
-  min-height: 100%;
-  background: var(--paper);
-}
-.page > div { width: 100%; }
-.cta.cta { min-height: 40px; padding-inline: 18px; font-size: 14px; background-color: #181818; color: var(--paper); }
-.cta.cta:hover { background-color: #292929; }
-:global([data-color-scheme="dark"]) .cta { background-color: var(--ink); color: var(--paper); }
-:global([data-color-scheme="dark"]) .cta:hover { background-color: color-mix(in srgb, var(--ink) 92%, var(--paper)); }
 .whatsapp { width: 17px; height: 17px; background: currentColor; mask: url("/assets/whatsapp.svg") center / contain no-repeat; }
-@media (max-width: 700px) {
-  .cta.cta { min-height: 44px; }
-}
