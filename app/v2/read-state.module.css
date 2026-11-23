@@ -1,0 +1,37 @@
+.surface, .inline {
+  display: grid; place-items: center; min-width: 0; box-sizing: border-box;
+  color: var(--muted); padding: var(--s-4);
+}
+.surface { flex: 1; min-height: min(62dvh, 560px); width: 100%; }
+.inline { min-height: 64px; }
+:global(.settings-layout):has(:global(.settings-content) > .surface) { align-items: stretch; }
+:global(.settings-content):has(> .surface) { display: flex; flex-direction: column; }
+:global(.sales-page):has(> .surface) { display: flex; flex-direction: column; min-height: 100%; }
+.skeleton {
+  display: flex; gap: 4px; align-items: center; justify-content: center;
+  height: 28px; animation: reveal .18s ease-out .18s backwards;
+}
+.skeleton i {
+  display: block; width: 4px; height: 10px; border-radius: 4px; background: currentColor;
+  animation: breathe 1.4s ease-in-out infinite;
+}
+.skeleton i:nth-child(2) { height: 18px; animation-delay: .12s; }
+.skeleton i:last-child { height: 14px; animation-delay: .24s; }
+.error { display: grid; justify-items: center; gap: 12px; text-align: center; max-width: 40ch; }
+.error p { margin: 0; }
+.results { position: relative; min-width: 0; }
+.results > [inert] { opacity: .56; pointer-events: none; }
+.progress {
+  position: absolute; z-index: 1; inset: 0 0 auto; height: 2px; border-radius: 2px;
+  background: var(--line); overflow: hidden; pointer-events: none;
+}
+.progress::after {
+  content: ""; display: block; height: 100%; width: 32%; background: var(--muted);
+  animation: progress 1.2s ease-in-out infinite;
+}
+@keyframes progress { from { transform: translateX(-100%); } to { transform: translateX(315%); } }
+@keyframes reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes breathe { 50% { opacity: .35; transform: scaleY(.7); } }
+@media (prefers-reduced-motion: reduce) {
+  .skeleton, .skeleton i, .progress::after { animation: none; }
+}

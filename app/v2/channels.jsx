@@ -114,7 +114,7 @@ function CreateConnection({session,context,onClose,onCreated,onUnconfirmed}) {
         {members.filter(member => member.id !== session.user.id).map(member =>
           <option key={member.id} value={member.id}>{member.name} · {member.role === "manager" ? "Gestor" : "Vendedor"}</option>)}
       </select></label>
-      {team.loading && <p role="status">Carregando equipe…</p>}
+      {team.loading && <ReadState full={false} read={team} />}
       {team.error && <p role="status">Não foi possível carregar a equipe. Você ainda pode conectar o número à sua conta.</p>}
       {team.next && <Button type="button" variant="ghost" size="sm" disabled={action.pending}
         onClick={team.next}>Carregar mais pessoas</Button>}
@@ -143,6 +143,7 @@ export function ConnectedChannels({catalog,session,context,connections}) {
     }} />}
     {line && <ConnectionDialog key={line.id} line={line} session={session} context={context} update={connections.retry} onClose={() => setLine(null)} />}
   </>;
+  if (!connections.confirmed) return <><ReadState read={connections} />{dialogs}</>;
   if (!connections.previous && connections.data?.items.length === 0) return <>
     <FirstAccess icon={Smartphone} preview="channels" title={manager && selfServeWhatsApp ?
       "Conecte seu primeiro WhatsApp" : manager ? "WhatsApp ainda não configurado" : "Nenhum número atribuído"}
@@ -154,7 +155,7 @@ export function ConnectedChannels({catalog,session,context,connections}) {
   return <DetailPage title="WhatsApps" icon={Smartphone}
     actions={manager && selfServeWhatsApp && connections.data?.items.some(c => c.channel === "whatsapp" || c.source === "evolution") &&
       <Button variant="primary" icon={QrCode} onClick={() => setCreating(true)}>Conectar WhatsApp</Button>}>
-    <ReadState read={connections}>{({items}) => {
+    <ReadState retain read={connections}>{({items}) => {
       const lines = items.filter(c => c.channel === "whatsapp" || c.source === "evolution");
       const samples = items.filter(c => c.source === "synthetic");
       function row(c) {const resume = manager && selfServeWhatsApp && c.status === "provisioning";

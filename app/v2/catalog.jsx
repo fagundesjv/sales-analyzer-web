@@ -10,7 +10,7 @@ import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
 import {EmptyState, FirstAccess} from "../../src/ui/os/empty-state";
 import {parseMoney} from "../../lib/operation";
 import {useV2Action, useV2Page, useV2Read} from "../../lib/v2-client";
-import {CursorNav, ReadState} from "./read-state";
+import {CursorNav, ReadState, useListSurface} from "./read-state";
 import s from "../directory.module.css";
 import css from "./catalog.module.css";
 
@@ -86,9 +86,9 @@ function CatalogEditor({item, kind, manager, context, close, saved, reload}) {
   </ResponsiveDialog>;
 }
 
-function CatalogPage({page, kind, manager, view, open, filtered, clear}) {
+function CatalogPage({page, kind, manager, view, open, filtered, clear, pending}) {
   return <>
-    <ReadState read={page}>{({items}) => <div className={s.inventoryScroll} data-view={view}
+    <ReadState retain pending={pending} read={page}>{({items}) => <div className={s.inventoryScroll} data-view={view}
       aria-label="Resultados do catálogo" role="region" tabIndex={0}>
       {items.length ? <CatalogItems service={kind === "service"} view={view} price={price}
         rows={items.map((item,index) => ({item:{...item,stock:availability[item.availability]},index}))}
@@ -105,7 +105,7 @@ function CatalogPage({page, kind, manager, view, open, filtered, clear}) {
             manager ? <Button size="sm" variant="primary" icon={Plus} onClick={() => open(null)}>
               Adicionar {noun(kind)}</Button> : null} />}
     </div>}</ReadState>
-    <CursorNav label="Páginas do catálogo" page={page} className={s.pager} />
+    <CursorNav label="Páginas do catálogo" page={page} pending={pending} className={s.pager} />
   </>;
 }
 
@@ -130,7 +130,7 @@ export function ConnectedCatalog({context,session}) {
   if (status) params.set("status",status);
   if (q) params.set("q",q);
   const path = itemsPath + "?" + params;
-  const page = useV2Page(term === q ? path : null,context,revision);
+  const page = useV2Page(path,context,revision);
   const emptyKind = !page.previous && !status && !text && !q && page.data?.items.length === 0;
   const otherKind = kind === "product" ? "service" : "product";
   const other = useV2Read(emptyKind ? itemsPath + "?kind=" + otherKind + "&limit=1" : null,context,revision);
@@ -143,23 +143,24 @@ export function ConnectedCatalog({context,session}) {
         setKind(result.kind || kind);
         reload();
       }} reload={reload} />;
-  if (emptyKind) {
-    if (!other.data) return <ReadState read={other} />;
-    if (!archived.data) return <ReadState read={archived} />;
-    if (!other.data.items.length && !archived.data.items.length) return <>
-      <FirstAccess icon={Package} preview="catalog" title="Seu catálogo começa aqui" notice={notice}
-        description={manager ? "Cadastre um produto ou serviço para sua equipe consultar durante as conversas." :
-          "Os produtos e serviços aparecerão aqui quando o gestor cadastrar o primeiro item."}
-        action={manager && <Button variant="primary" icon={Plus} onClick={() => setEditor({item:null})}>Adicionar primeiro item</Button>} />
-      {dialog}</>;
-  }
+  const probes = [other,archived];
+  const check = emptyKind && (probes.find(read => read.error) || probes.find(read => !read.data));
+  const firstAccess = emptyKind && !check && !other.data.items.length && !archived.data.items.length;
+  const browse = useListSurface(page,!!check,firstAccess);
+  if (firstAccess) return <>
+    <FirstAccess icon={Package} preview="catalog" title="Seu catálogo começa aqui" notice={notice}
+      description={manager ? "Cadastre um produto ou serviço para sua equipe consultar durante as conversas." :
+        "Os produtos e serviços aparecerão aqui quando o gestor cadastrar o primeiro item."}
+      action={manager && <Button variant="primary" icon={Plus} onClick={() => setEditor({item:null})}>Adicionar primeiro item</Button>} />
+    {dialog}</>;
+  if (!browse) return <ReadState read={check || page} />;
   return <div data-stable-phone-tabs><DetailPage title="Produtos e serviços" icon={Package}>
     <section className={s.directory} aria-label="Catálogo"><div className={s.head}>
       <Pills label="Tipo de item" items={kinds} value={kind} onChange={value => {setKind(value);clear();}} />
-      {manager && !emptyKind && <Button icon={Plus} variant="primary" aria-label={"Adicionar " + noun(kind)}
+      {manager && (!emptyKind || check) && <Button icon={Plus} variant="primary" aria-label={"Adicionar " + noun(kind)}
         onClick={() => {setEditor({item:null});setNotice("");}}>Adicionar<span className={s.addNoun}>{" " + noun(kind)}</span></Button>}
     </div>
-    {(!emptyKind || archived.data?.items.length > 0) && <div className={s.catalogTools} data-open={filtersOpen}>
+    {(!emptyKind || check || archived.data?.items.length > 0) && <div className={s.catalogTools} data-open={filtersOpen}>
       <SearchField label="Buscar no catálogo" placeholder="Buscar item…" value={text} maxLength={80} enterKeyHint="search"
         onValueChange={value => {setText(value);setNotice("");}} />
       <button type="button" className={s.filterToggle} aria-expanded={filtersOpen} aria-controls="v2-catalog-filter"
@@ -173,7 +174,7 @@ export function ConnectedCatalog({context,session}) {
       <CatalogViewSwitch view={view} onChange={setView} />
     </div>}
     {notice && <p role="status" className={css.notice}>{notice}</p>}
-    {term !== q ? <p role="status">Buscando itens…</p> : <CatalogPage page={page}
+    {check ? <ReadState read={check} full={false} /> : <CatalogPage page={page} pending={term !== q}
       kind={kind} manager={manager} view={view} open={item => {setEditor({item});setNotice("");}}
       filtered={!!(q || status)} clear={clear} />}
     </section>

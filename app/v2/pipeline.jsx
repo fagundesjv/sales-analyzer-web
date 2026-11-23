@@ -115,9 +115,9 @@ function Lane({stage,boardId,owner,context,showMove}) {
   const [cursors,setCursors] = useState([null]);
   const cursor=cursors.at(-1);
   const suffix=new URLSearchParams({limit:cardsPerStage,...(owner?{assigneeId:owner}:{}),...(cursor?{cursor}:{})});
-  const read=useV2Read(cursor ? "pipelines/"+boardId+"/stages/"+stage.id+"/cards?"+suffix : null,context);
-  const current=cursor ? read : {data:stage};
-  const page={number:cursors.length,
+  const read=useV2Read(cursor ? "pipelines/"+boardId+"/stages/"+stage.id+"/cards?"+suffix : null,context,0,"cards/"+stage.id);
+  const current=cursor ? {...read,previousData:read.previousData ?? stage} : {data:stage};
+  const page={number:cursors.length,loading:current.loading,
     next:current.data?.nextCursor ? () => setCursors(previous => [...previous,current.data.nextCursor]) : null,
     previous:cursors.length>1 ? () => setCursors(previous => previous.slice(0,-1)) : null,
   };
@@ -126,7 +126,7 @@ function Lane({stage,boardId,owner,context,showMove}) {
       <h2>{stage.name}</h2><small aria-label={stage.total+" negociações"}>{stage.total}</small>
     </header>
     <CursorNav label={"Páginas de "+stage.name} page={page} className={pageStyle.pagination} />
-    <ReadState read={current}>{data => data.items.length ? data.items.map(card => <article key={card.id} className={boardStyle.deal}>
+    <ReadState retain read={current}>{data => data.items.length ? data.items.map(card => <article key={card.id} className={boardStyle.deal}>
       <a href={"#entrada/todos/"+card.id}><b>{card.title}</b><ArrowUpRight size={16} aria-hidden="true" /></a>
       <p>{card.summary}</p>
       <div className={boardStyle.dealFoot}><small>{card.ownerName}</small>
@@ -152,7 +152,7 @@ export function ConnectedPipeline({session,context}) {
   useEffect(() => {if (directory.data?.defaultPipelineId) setPreferred(directory.data.defaultPipelineId);},
     [directory.data?.defaultPipelineId]);
   const query=new URLSearchParams({limit:cardsPerStage,...(owner?{assigneeId:owner}:{})});
-  const board=useV2Read(id?"pipelines/"+id+"?"+query:null,context,revision);
+  const board=useV2Read(id?"pipelines/"+id+"?"+query:null,context,revision,"pipelines/"+id);
 
   function refresh() {
     setDialog(null);
@@ -165,12 +165,13 @@ export function ConnectedPipeline({session,context}) {
   }
   const editor = dialog?.kind==="pipeline" && <PipelineEditor existing={dialog.board} context={context}
       close={() => setDialog(null)} save={saved} refresh={refresh} />;
-  if (!id) return <><ReadState read={directory}>{() => <FirstAccess icon={KanbanSquare} preview="pipeline"
+  if (!id) return <><ReadState full read={directory}>{() => <FirstAccess icon={KanbanSquare} preview="pipeline"
       title="Organize as negociações por etapa"
       description={manager ? "Crie o primeiro funil para acompanhar as conversas analisadas." :
         "O gestor ainda não configurou um funil para esta empresa."}
       action={manager && <Button variant="primary" onClick={() => setDialog({kind:"pipeline"})}>Criar funil</Button>} />}</ReadState>
     {editor}</>;
+  if (!board.confirmed) return <><ReadState read={board} />{editor}</>;
   return <div className={boardStyle.desk} data-stable-phone-tabs>
     <PageHeader title="Pipeline comercial" actions={<ButtonLink href="#tarefas" icon={MessageCircle}>Retornos agendados</ButtonLink>} />
       <div className={pageStyle.toolbar}>
@@ -193,7 +194,7 @@ export function ConnectedPipeline({session,context}) {
       {directory.error && <ReadState read={directory}>{() => null}</ReadState>}
       {manager && people.error && <ReadState read={people}>{() => null}</ReadState>}
       {notice && <p role="status">{notice}</p>}
-      <ReadState read={board}>{data => owner && data.stages.every(stage => stage.total === 0) ?
+      <ReadState retain read={board}>{data => owner && data.stages.every(stage => stage.total === 0) ?
         <EmptyState size="section" icon={SearchX} title="Nenhuma negociação deste responsável"
           description="Mostre toda a equipe para consultar as negociações deste funil."
           action={<Button size="sm" onClick={() => setOwner("")}>Mostrar toda a equipe</Button>} /> :

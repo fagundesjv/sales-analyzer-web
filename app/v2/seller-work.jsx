@@ -9,7 +9,7 @@ import {Pills} from "../../src/ui/os/pills";
 import {EmptyState, FirstAccess} from "../../src/ui/os/empty-state";
 import {inboxHref,localDate} from "../../lib/inbox";
 import {useV2Action,useV2Page,useV2Read} from "../../lib/v2-client";
-import {CursorNav,ReadState} from "./read-state";
+import {CursorNav,ReadState,useListSurface} from "./read-state";
 import css from "../customer-inbox.module.css";
 import f from "../focus.module.css";
 import a from "../returns-agenda.module.css";
@@ -106,14 +106,17 @@ export function ConnectedReturns({context}) {
   const page = useV2Page("returns?status=" + (view === "done" ? "completed" : "open") + (view === "today" ? "&throughDate=" + localDate() : ""),context);
   const openIsEmpty = view === "open" && !page.previous && page.data?.items.length === 0;
   const completed = useV2Read(openIsEmpty ? "returns?status=completed&limit=1" : null, context);
-  if (openIsEmpty && !completed.data) return <ReadState read={completed} />;
-  if (openIsEmpty && completed.data.items.length === 0) return <FirstAccess icon={CalendarDays} preview="returns"
+  const checking = openIsEmpty && !completed.data;
+  const firstAccess = openIsEmpty && completed.data?.items.length === 0;
+  const browse = useListSurface(page,checking,firstAccess);
+  if (!browse && !firstAccess) return <ReadState read={checking ? completed : page} />;
+  if (firstAccess) return <FirstAccess icon={CalendarDays} preview="returns"
     title="Agenda livre" description="Agende seu próximo contato em uma conversa. Os retornos combinados com os clientes aparecem aqui."
     action={<ButtonLink variant="primary" href="#entrada">Abrir conversas</ButtonLink>} />;
   return <DetailPage title="Retornos" icon={CalendarClock}>
     <div className={a.agenda}><div className={a.toolbar}><Pills label="Agenda de retornos" value={view} onChange={setView}
       items={[{value:"open",label:"Em aberto"},{value:"today",label:"Até hoje"},{value:"done",label:"Concluídos"}]} /></div>
-      <ReadState read={page}>{({items}) => items.length ? <ul className={a.list} aria-label="Retornos agendados">
+      <ReadState retain read={checking ? completed : page}>{({items}) => items.length ? <ul className={a.list} aria-label="Retornos agendados">
         {items.map(task => <ReturnRow key={task.id} task={task} context={context} refresh={page.retry} />)}</ul> :
         <EmptyState icon={CalendarDays} title={page.previous ? "Esta página está vazia" :
           view === "done" ? "Nenhum retorno concluído" : view === "today" ? "Tudo em dia por hoje" : "Nenhum retorno em aberto"}

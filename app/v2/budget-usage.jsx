@@ -87,13 +87,13 @@ export function BudgetUsage({session,context}) {
   const [period,setPeriod] = useState(currentMonth);
   const manager = session.workspace.role === "manager";
   const validPeriod = monthPattern.test(period) && period <= currentMonth;
-  const usage = useV2Read(manager && validPeriod ? "budget/usage?period=" + period : null,context);
+  const usage = useV2Read(manager && validPeriod ? "budget/usage?period=" + period : null,context,0,"budget/usage");
   return <DetailPage title="Uso da empresa" icon={Activity}>
     {manager ? <>
       <label className="op-field" data-stable-phone-tabs>Mês de referência (UTC)
         <input type="month" value={period} min="1000-01" max={currentMonth} onChange={event => setPeriod(event.target.value)} />
       </label>
-      {validPeriod ? <ReadState read={usage}>{data => <UsageResult data={data} period={period}
+      {validPeriod ? <ReadState retain read={usage}>{data => <UsageResult data={data} period={period}
         currentMonth={currentMonth} workspaceId={session.workspace.id} showCurrent={() => setPeriod(currentMonth)} />}</ReadState> :
         <p role="status">Escolha o mês atual ou um mês anterior.</p>}
     </> : <EmptyState icon={LockKeyhole} title="Uso disponível para gestores"

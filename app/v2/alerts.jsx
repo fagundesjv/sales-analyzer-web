@@ -7,7 +7,7 @@ import {Pills} from "../../src/ui/os/pills";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
 import {EmptyState} from "../../src/ui/os/empty-state";
 import {useV2Action, useV2Page, useV2Read} from "../../lib/v2-client";
-import {RadarEmpty} from "./radar-empty";
+import {RadarEmpty, useRadarEmpty} from "./radar-empty";
 import {CursorNav, ReadState} from "./read-state";
 import s from "./alerts.module.css";
 
@@ -89,6 +89,8 @@ export function ConnectedAlerts({session,context}) {
   if (readFilter!=="all") params.set("read",readFilter);
   if (kind) params.set("kind",kind);
   const page=useV2Page(params.size ? "alerts?"+params : "alerts",context);
+  const baselineEmpty = !params.size && !page.previous && page.data?.items.length === 0;
+  const empty = useRadarEmpty(baselineEmpty,session,context);
   function saved() {
     setRules(false);
     setNotice("Regras salvas.");
@@ -96,10 +98,11 @@ export function ConnectedAlerts({session,context}) {
   }
   function openRules() {setNotice("");setRules(true);}
   const dialog = rules && <Rules context={context} close={()=>setRules(false)} saved={saved} />;
-  if (!params.size && !page.previous && !page.data && !rules)
+  if (!page.confirmed || (!params.size && !page.previous && page.loading && page.previousData?.items.length === 0 && !rules))
     return <ReadState read={page} />;
-  if (!params.size && !page.previous && page.data?.items.length === 0)
-    return <><RadarEmpty kind="alerts" session={session} context={context}
+  if (baselineEmpty && !empty.data) return <ReadState read={empty} />;
+  if (baselineEmpty)
+    return <><RadarEmpty kind="alerts" step={empty.data.step}
       openRules={manager ? openRules : undefined} notice={notice} />{dialog}</>;
   return <div data-stable-phone-tabs><DetailPage title="Alertas" icon={Bell}
     actions={manager &&
@@ -116,7 +119,7 @@ export function ConnectedAlerts({session,context}) {
         </select></label>
       </div>
       <CursorNav label="Páginas de alertas" page={page} className={s.pager} />
-      <ReadState read={page}>{data=>data.items.length ? <List label="Lista de alertas">
+      <ReadState retain read={page}>{data=>data.items.length ? <List label="Lista de alertas">
         {data.items.map(alert=><AlertItem alert={alert} key={alert.id+":"+(alert.readAt??"")} context={context}
           changed={()=>{if (readFilter!=="all") page.retry();}} />)}
       </List> : <EmptyState icon={SearchX}

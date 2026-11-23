@@ -27,7 +27,7 @@ const turnTitle = turn => turn.query.question || subjects[turn.query.type].quest
 const turnHref = (turn, cursor) => "#zoe/" + turn.id + (cursor ? "/" + cursor : "");
 
 export function ZoeHistory({history, route}) {
-  return <ReadState read={history}>{({items}) => <>
+  return <ReadState retain read={history}>{({items}) => <>
     <SessionRows label="Perguntas anteriores" current={route}
       empty={<EmptyState size="compact" icon={Sparkles} preview={history.previous ? undefined : "zoe"} title={history.previous ? "Esta página está vazia" : "Sua história com a Zoe começa aqui"}
         description={history.previous ? "Volte à página anterior para ver suas consultas." : "Pergunte à Zoe sobre sua operação. As consultas ficam salvas aqui."} />}
@@ -90,7 +90,7 @@ function ConversationPicker({context, select, close}) {
   const list = useV2Page("conversations?q=" + encodeURIComponent(query),context,0,10);
   return <ResponsiveDialog open title="Escolher conversa" onClose={close}><div className="flow">
     <SearchField label="Buscar conversa para a Zoe" value={text} maxLength={80} onValueChange={setText} placeholder="Buscar contato ou conversa…" />
-    <ReadState read={list}>{({items}) => items.length ? <ul className={s.choices}>
+    <ReadState retain pending={text.trim() !== query} read={list}>{({items}) => items.length ? <ul className={s.choices}>
       {items.map(row => <li key={row.id}><button type="button" onClick={() => select(row)}>
         <strong>{row.title}</strong><small>{row.summary}</small></button></li>)}
     </ul> : <EmptyState size="compact" icon={query ? SearchX : MessageCircle} preview={query || list.previous ? undefined : "inbox"}
@@ -98,7 +98,7 @@ function ConversationPicker({context, select, close}) {
       description={list.previous ? "Volte para a página anterior de conversas." : query ? "Tente outro contato para perguntar à Zoe." :
         "As conversas analisadas da sua operação aparecerão aqui."}
       action={list.previous ? <Button size="sm" onClick={list.previous}>Página anterior</Button> : query ? <Button size="sm" variant="secondary" onClick={() => {setText("");setQuery("");}}>Limpar busca</Button> : <ButtonLink size="sm" href="#entrada" onClick={close}>Abrir conversas</ButtonLink>} />}</ReadState>
-    <CursorNav page={list} label="Páginas de conversas para a Zoe" />
+    <CursorNav page={list} pending={text.trim() !== query} label="Páginas de conversas para a Zoe" />
   </div></ResponsiveDialog>;
 }
 
@@ -204,12 +204,12 @@ export function ConnectedZoe({route,session,context,history}) {
     return <Chat settings={settings.data} turn={turn} origin={id} source={source}
       session={session} context={context} onSaved={result => {history.first();window.location.hash = turnHref(result);}} />;
   }
-  return <ReadState read={settings}>{() => {
-    if (fromConversation) return uuid.test(extra || "") ? <ReadState read={source} notFound={<EmptyState size="compact" icon={MessageCircle} title="Conversa indisponível"
+  return <ReadState full read={settings}>{() => {
+    if (fromConversation) return uuid.test(extra || "") ? <ReadState full read={source} notFound={<EmptyState size="compact" icon={MessageCircle} title="Conversa indisponível"
       description="Escolha outra conversa ao fazer a pergunta."
       action={<ButtonLink href="#chat" size="sm">Abrir o chat da Zoe</ButtonLink>} />}>{row => view(null,row)}</ReadState> :
       <p role="alert">Conversa inválida. <a href="#chat">Abrir o chat da Zoe</a></p>;
-    if (page === "zoe" && id) return <ReadState read={saved}>{turn => turn ? view(turn,null) :
+    if (page === "zoe" && id) return <ReadState full read={saved}>{turn => turn ? view(turn,null) :
       <EmptyState icon={Sparkles} size="compact" title="Consulta indisponível para esta conta"
         description="Inicie outra pergunta para consultar os dados disponíveis." action={<ButtonLink href="#chat" size="sm">Nova pergunta</ButtonLink>} />}</ReadState>;
     return view(null,null);

@@ -11,6 +11,8 @@ const selfServe=process.env.SA_EXPECT_WHATSAPP_SELF_SERVE==="1";
 const shots=process.env.SA_EVIDENCE_DIR;
 if (shots) await mkdir(shots,{recursive:true});
 const preview=process.argv.includes("--preview");
+const previewDelay=preview ? Number(process.env.SA_PREVIEW_DELAY_MS || 0) : 0;
+assert.ok(Number.isFinite(previewDelay) && previewDelay>=0 && previewDelay<=5000);
 const browser=preview ? null : await chromium.launch({channel:"chrome"});
 const empty={items:[],nextCursor:null};
 
@@ -21,6 +23,7 @@ async function scenario(role,width) {
   const wonId=randomUUID(), nextCursor=randomUUID(), pipelineId=randomUUID();
   const state={line:null,conversations:[],wins:!preview,pipeline:false,loggedIn:true};
   const web=await startFixtureWeb(bundle,0,async (req,res,path)=>{
+    if (previewDelay) await new Promise(resolve=>setTimeout(resolve,previewDelay));
     if(path==="session" && !state.loggedIn) return json(res,401,{});
     if(path==="session") return json(res,200,{user,workspace,workspaces:[workspace]});
     if(req.headers["x-v2-context"]!==context) return json(res,403,{});
@@ -87,13 +90,19 @@ async function scenario(role,width) {
   async function checkFirstAccess(hash) {
     const panel=page.locator("[data-first-access]");
     if (!await panel.count()) return;
+    // Measure settled layout, including any finishing navigation or touch feedback.
+    await panel.evaluate(async el=>{
+      const animations=document.getAnimations().filter(anim=>anim.effect?.getTiming().iterations!==Infinity &&
+        (el.contains(anim.effect?.target) || anim.effect?.target?.contains(el)));
+      await Promise.allSettled(animations.map(anim=>anim.finished));
+    });
     const preview=await panel.locator("[data-preview]").boundingBox();
     assert.ok(Math.abs(preview.width-(width===390?284:354))<1,hash+" deve usar a escala de Conversas");
     const action=panel.locator('[role="status"] + div').getByRole("link").or(
       panel.locator('[role="status"] + div').getByRole("button"));
     if (await action.count()===1) {
       const box=await action.boundingBox();
-      assert.ok(box.height >= (width===390?44:40),hash+" deve manter a altura de toque");
+      assert.ok(box.height >= (width===390?44:40),hash+" deve manter a altura de toque ("+box.height+" px)");
       assert.ok(Math.abs((box.x+box.width/2)-(preview.x+preview.width/2))<2,hash+" deve centralizar a ação");
     }
   }
@@ -131,7 +140,7 @@ async function scenario(role,width) {
       const request=page.waitForRequest(req=>req.url().includes("/api/v2/conversations?"));
       await page.goto(web.origin+"/#entrada");
       await request;
-      await page.getByText("Carregando…",{exact:true}).first().waitFor();
+      await page.getByRole("status",{name:"Carregando dados"}).first().waitFor();
       assert.equal(await page.locator('[data-preview="inbox"]').count(),0);
     } finally {release();state.delayList=null;}
     await open("entrada","Toda conversa começa com uma conexão");
@@ -364,7 +373,7 @@ async function scenario(role,width) {
   } finally {await ctx.close();await web.close();}
 }
 if (preview) {
-  await scenario("manager",1440);
+  await scenario(process.argv.includes("--seller") ? "seller" : "manager",1440);
 } else {
   try {for(const width of [1440,390]) for(const role of ["manager","seller"]) await scenario(role,width);}
   finally {await browser.close();}

@@ -152,26 +152,24 @@ export function ConnectedInbox({revision: listRevision, id, validId, context, se
   const [revision, setRevision] = useState(0);
   const [celebrate, setCelebrate] = useState(null);
   const detail = useV2Read(validId ? "conversations/" + id : null, context, revision);
-  const hasLoadedList = useRef(false);
-  useEffect(() => {if (inbox.data) hasLoadedList.current = true;}, [inbox.data]);
+  const pendingSearch = search.trim() !== query;
   const firstAccess = !id && !search.trim() && !query && filter === "all" &&
     inbox.data?.items.length === 0 && !inbox.previous && !inbox.next;
   const connections = useV2Read(firstAccess ? "connections?limit=100" : null,context,listRevision);
-  const focus = useV2Read(firstAccess ? null : "focus",context);
+  const focus = useV2Read(!firstAccess && (validId || inbox.confirmed) ? "focus" : null,context);
   const focusAction = useV2Action(context);
   const open = target => {location.hash = inboxHref(target);};
   const bar = <FocusBar read={focus} action={focusAction} currentId={validId ? id : null}
-    candidate={detail.data?.id || inbox.data?.items[0]?.id} onOpen={open} />;
+    candidate={detail.data?.id || (!pendingSearch && inbox.data?.items[0]?.id)} onOpen={open} />;
   const mobileThread = mobile && !!id;
-  if (!id && !search.trim() && !query && filter === "all" && (inbox.error || (inbox.loading && !hasLoadedList.current)))
-    return <ReadState read={inbox}>{() => null}</ReadState>;
-  if (firstAccess) return <ReadState read={connections}>{data =>
+  if (!id && !inbox.confirmed) return <ReadState read={inbox} />;
+  if (firstAccess) return <ReadState full read={connections}>{data =>
     <InboxOnboarding session={session} lines={data.items} />}</ReadState>;
   return <div className={css.inbox} data-thread={!!id}>
     <section className={css.list} aria-label="Lista de atendimentos"><div className={css.listHead}>{!mobileThread && bar}
       <SearchField label="Buscar conversas" value={search} maxLength={80} onValueChange={setSearch} placeholder="Buscar conversas…" /><Pills size="sm" label="Filtro da caixa" value={filter} onChange={setFilter}
         items={[{value:"all",label:"Todas"},{value:"fav",label:"Favoritas"}]} /></div>
-      <div className={css.rows}><ReadState read={inbox}>{({items:matches}) => {
+      <div className={css.rows}><ReadState retain pending={pendingSearch} read={inbox}>{({items:matches}) => {
         return matches.length ? matches.map(item => <a className={css.row} href={inboxHref(item.id)}
           key={item.id} aria-current={id === item.id || undefined} onClick={e => {
             const round = focus.data?.round;
@@ -192,7 +190,7 @@ export function ConnectedInbox({revision: listRevision, id, validId, context, se
               onClick={() => {setSearch("");setQuery("");setFilter("all");}}>Mostrar todas</Button> :
               inbox.previous ? <Button size="sm" variant="secondary" onClick={inbox.previous}>Página anterior</Button> :
               <ButtonLink href="#whatsapps" size="sm" variant="secondary">Ver WhatsApps</ButtonLink>} />;
-      }}</ReadState><CursorNav page={inbox} label="Páginas da caixa de entrada" /></div>
+      }}</ReadState><CursorNav page={inbox} pending={pendingSearch} label="Páginas da caixa de entrada" /></div>
     </section>
     <div className={css.read}>{!id ? <EmptyState icon={MessageCircle}
       title={inbox.data?.items.length === 0 && !query && filter === "all" ? "Sua caixa está pronta" : "Escolha uma conversa"}

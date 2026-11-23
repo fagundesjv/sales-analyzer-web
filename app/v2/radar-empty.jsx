@@ -4,7 +4,6 @@ import {Bell, Handshake, Radar} from "lucide-react";
 import {useV2Read} from "../../lib/v2-client";
 import {FirstAccess} from "../../src/ui/os/empty-state";
 import {connectionNextStep} from "./connection-next-step";
-import {ReadState} from "./read-state";
 
 const sections = {
   radar: {
@@ -24,23 +23,22 @@ const sections = {
   },
 };
 
-export function RadarEmpty({kind, session, context, openRules, notice}) {
-  const summary = useV2Read("summary",context);
-  const connections = useV2Read(summary.data?.conversations === 0 ? "connections?limit=100" : null,context);
+// A zero in a filtered list is not evidence that the company is new.
+export function useRadarEmpty(enabled, session, context) {
+  const summary = useV2Read(enabled ? "summary" : null,context);
+  const connections = useV2Read(enabled && summary.data?.conversations === 0 ? "connections?limit=100" : null,context);
+  if (!summary.data) return summary;
+  if (summary.data.conversations > 0) return {data:{step:null}};
+  if (!connections.data) return connections;
+  return {data:{step:connectionNextStep(session.workspace.role === "manager",connections.data.items)}};
+}
+
+export function RadarEmpty({kind, step, openRules, notice}) {
   const section = sections[kind];
-  const headingId = kind + "-empty-title";
-
-  function panel(step) {
-    const rulesPrimary = openRules && !step;
-    return <FirstAccess notice={notice}
-        tools={openRules && step && <Button variant="ghost" size="sm" onClick={openRules}>Regras de alerta</Button>} headingId={headingId} preview={kind} icon={section.icon}
-        title={step ? section.title : section.quiet} description={step ? step.description : section.description}
-        action={rulesPrimary ? <Button variant="primary" shape="pill" onClick={openRules}>Regras de alerta</Button> :
-          <ButtonLink variant="primary" shape="pill" href={step?.href || "#entrada"}>
-            {step?.label || "Abrir conversas"}</ButtonLink>} />;
-  }
-
-  return <ReadState read={summary}>{data => data.conversations > 0 ? panel(null) :
-    <ReadState read={connections}>{({items}) => panel(connectionNextStep(session.workspace.role === "manager",items))}</ReadState>
-  }</ReadState>;
+  return <FirstAccess notice={notice} headingId={kind+"-empty-title"} preview={kind} icon={section.icon}
+    tools={openRules && step && <Button variant="ghost" size="sm" onClick={openRules}>Regras de alerta</Button>}
+    title={step ? section.title : section.quiet} description={step ? step.description : section.description}
+    action={openRules && !step ? <Button variant="primary" shape="pill" onClick={openRules}>Regras de alerta</Button> :
+      <ButtonLink variant="primary" shape="pill" href={step?.href || "#entrada"}>
+        {step?.label || "Abrir conversas"}</ButtonLink>} />;
 }

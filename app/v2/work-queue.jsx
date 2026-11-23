@@ -14,7 +14,7 @@ import {StatTiles} from "../../src/ui/os/stat-tiles";
 import {DetailPage, DetailRows, DetailSection, DetailText} from "../../src/ui/os/detail";
 import {EmptyState, FirstAccess} from "../../src/ui/os/empty-state";
 import {DashboardVersion} from "../commercial-dashboard";
-import {RadarEmpty} from "./radar-empty";
+import {RadarEmpty, useRadarEmpty} from "./radar-empty";
 import {RadarBrief} from "../radar-reading";
 import {ContactMark} from "../recovery-desk";
 import {CursorNav, ReadState} from "./read-state";
@@ -53,6 +53,8 @@ export function ConnectedDashboard({radar, context, session, gains}) {
   const list = gains ? sales : radar;
   const firstAnalysis = summary.data?.conversations === 0;
   const manager = session.workspace.role === "manager";
+  if (summary.error || (!list.confirmed && list.error)) return <ReadState read={summary.error ? summary : list} />;
+  if (!summary.data || !list.confirmed) return <ReadState read={!summary.data ? summary : list} />;
   if (firstAnalysis && !summary.data.opportunities && !summary.data.pendingWins.count && !summary.data.confirmedWins.count &&
       !list.previous && list.data?.items.length === 0)
     return <FirstAccess icon={gains ? Trophy : ChartColumn} preview={gains ? "gains" : "dashboard"}
@@ -69,7 +71,7 @@ export function ConnectedDashboard({radar, context, session, gains}) {
         {id:"pending", label:"Ganhos a confirmar", value:exactReais(data.pendingWins.amountCents), caption:data.pendingWins.count + " a confirmar",href:"#resultados"},
         {id:"amount", label:"Valor confirmado", value:exactReais(data.confirmedWins.amountCents), caption:data.confirmedWins.count + (data.confirmedWins.count === 1 ? " venda" : " vendas")},
     ]} />}</ReadState>
-    <ReadState read={list}>{({items}) => <Queue items={items}
+    <ReadState retain read={list}>{({items}) => <Queue items={items}
       title={gains ? "Vendas ganhas" : "Oportunidades no Radar"}
       empty={!gains && !list.previous && !summary.data ? null : <EmptyState icon={gains ? Trophy : Radar} preview={list.previous ? undefined : gains ? "gains" : "dashboard"}
         title={list.previous ? "Esta página está vazia" : gains ? "Ganhos aparecerão aqui" :
@@ -89,8 +91,8 @@ export function ConnectedDashboard({radar, context, session, gains}) {
 const radarChoices = [{value:"all",label:"Todas"},{value:"open",label:"Em aberto"},{value:"won",label:"Ganhas"},
   {value:"lost",label:"Perdidas"},{value:"resolved",label:"Resolvidas"}];
 
-function RadarResults({radar, priorities, clearFilters}) {
-  return <ReadState read={radar}>{({items}) => {
+function RadarResults({radar, priorities, clearFilters, pending}) {
+  return <ReadState retain read={radar} pending={pending}>{({items}) => {
       if (!items.length) return <EmptyState icon={SearchX}
         title={radar.previous ? "Esta página está vazia" : "Nenhuma oportunidade neste recorte"}
         description={radar.previous ? "Volte à página anterior para conferir as oportunidades." :
@@ -128,16 +130,16 @@ export function ConnectedRadar({context,session,title}) {
   if (q) params.set("q",q);
   if (filter !== "all") params.set("outcome",filter);
   const path = params.size ? "radar?" + params.toString() : "radar";
-  const radar = useV2Page(pending ? null : path,context);
+  const radar = useV2Page(path,context);
   function clearFilters() {
     setText(""); setQ(""); setFilter("all");
   }
   const priorities = title === "Radar";
-  if (!pending && !params.size && !radar.previous && !radar.data)
-    return <ReadState read={radar} />;
-  if (!pending && !params.size && !radar.previous && radar.data?.items.length === 0)
-    return <ReadState read={radar}>{() => <RadarEmpty kind={priorities ? "radar" : "deals"}
-      session={session} context={context} />}</ReadState>;
+  const baselineEmpty = !pending && !params.size && !radar.previous && radar.data?.items.length === 0;
+  const empty = useRadarEmpty(baselineEmpty,session,context);
+  if (!radar.confirmed) return <ReadState read={radar} />;
+  if (baselineEmpty && !empty.data) return <ReadState read={empty} />;
+  if (baselineEmpty) return <RadarEmpty kind={priorities ? "radar" : "deals"} step={empty.data.step} />;
   return <div className={r.radar} data-stable-phone-tabs><DetailPage
     title={priorities ? "Radar de recuperação" : title} icon={priorities ? Radar : TrendingUp}
     actions={<ButtonLink variant="secondary" href="#diagnosticos">Abrir diagnósticos</ButtonLink>}>
@@ -145,8 +147,7 @@ export function ConnectedRadar({context,session,title}) {
       <SearchField label="Buscar oportunidade" placeholder="Buscar contato ou sinal…" value={text} onValueChange={setText}
         maxLength={80} enterKeyHint="search" />
       <Pills label="Situação da negociação" items={radarChoices} value={filter} onChange={setFilter} />
-      {pending ? <p role="status">Buscando oportunidades…</p> :
-        <RadarResults radar={radar} priorities={priorities} clearFilters={clearFilters} />}
+      <RadarResults radar={radar} priorities={priorities} pending={pending} clearFilters={clearFilters} />
     </div></DetailPage></div>;
 }
 
@@ -283,6 +284,7 @@ export function Diagnostics({connections, context, initialId, manager}) {
       <Button size="sm" variant="ghost" disabled={action.pending || !!waiting} onClick={() => track(job)}>Acompanhar execução</Button>
     </details>;
   }
+  if (!id && !connections.confirmed) return <ReadState read={connections} />;
   if (!id && !connections.previous && connections.data?.items.length === 0)
     return <FirstAccess icon={ScanText} preview="diagnostics" title="Nenhuma conexão disponível"
       description={manager ? selfServeWhatsApp ? "Conecte um WhatsApp para analisar as conversas da operação." :
@@ -290,15 +292,15 @@ export function Diagnostics({connections, context, initialId, manager}) {
         "Peça ao gestor para atribuir uma linha à sua conta antes de iniciar uma análise."}
       action={<ButtonLink variant="primary" href="#whatsapps">Ver WhatsApps</ButtonLink>} />;
   return <DetailPage title="Diagnósticos" icon={ScanText} >
-    <DetailSection title="Novo diagnóstico"><ReadState read={connections}>{({items}) => items.length ?
+    <DetailSection title="Novo diagnóstico"><ReadState retain read={connections}>{({items}) => items.length ?
       <form className="flow" onSubmit={e => {e.preventDefault();if (formAction) start(activeLine.id);}}>
-        <label className="op-field">Conexão <select aria-label="Conexão" value={activeLine.id} disabled={action.pending || !!waiting}
+        <label className="op-field">Conexão <select aria-label="Conexão" value={activeLine?.id ?? ""} disabled={action.pending || !!waiting}
           onChange={e => {action.clearError();setConnection(e.target.value);setPreviousReport(null);setSelection(null);sessionStorage.removeItem(storageKey);}}>
           {items.map(c => <option key={c.id} value={c.id}>{c.name}{c.source === "synthetic" ? " · Exemplo" : " · WhatsApp"}</option>)}
         </select></label>
         <div className={diagnosticStyles.actions}>{formAction && <Button type="submit" disabled={action.pending || !!waiting || history.loading}>
           {partialHere && !current?.reconcileHours ? "Continuar leitura desta linha" : "Iniciar diagnóstico"}</Button>}
-          {manager && activeLine.source === "evolution" && !verifyCost && !(retryHere && current?.reconcileHours) &&
+          {manager && activeLine?.source === "evolution" && !verifyCost && !(retryHere && current?.reconcileHours) &&
             <Button type="button" variant="secondary" disabled={action.pending || !!waiting || history.loading}
               onClick={() => reviewReconciliation(activeLine)}>Conciliar histórico</Button>}
         </div>
@@ -323,7 +325,7 @@ export function Diagnostics({connections, context, initialId, manager}) {
             {action.pending ? "Enfileirando…" : job.status === "failed" ? "Tentar diagnóstico novamente" : "Continuar leitura desta linha"}
           </Button>)}
       </>}</ReadState></DetailSection>}
-    {activeLine && <DetailSection title="Histórico da conexão"><ReadState read={history}>{({items}) =>
+    {activeLine && <DetailSection title="Histórico da conexão"><ReadState retain read={history}>{({items}) =>
       items.length ? <div className="flow">{items.map(historyEntry)}</div> :
         <EmptyState icon={ScanText} preview={history.previous ? undefined : "diagnostics"} size="compact" title={history.previous ? "Esta página está vazia" : "Nenhuma leitura nesta conexão"}
           description={history.previous ? "Volte à página anterior para conferir as leituras." : "Inicie a análise pelo formulário acima para acompanhar o processamento aqui."} />}</ReadState>
