@@ -24,7 +24,7 @@ A revisão `sha256:c6b9482ee53f4a186cef562aad116a318ff3a5eff2cfbd713530a67b3672c
 
 O pacote público padrão compila `NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE=disabled`. Assim, os botões de criar e provisionar uma linha nova ficam ocultos e nenhuma dessas rotas é chamada pela interface. O QR Code para **linhas já cadastradas** continua disponível ao gestor pela rota existente de pareamento. A tela de primeiro acesso orienta a configuração assistida e os estados vazios estão descritos em [v2-empty-states.md](v2-empty-states.md).
 
-Somente depois de publicar e verificar `POST /v1/connections` e `POST /v1/connections/{id}/provision`, o provisionamento e o isolamento da credencial administrativa, gere outro pacote com `NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE=enabled`. Essa capacidade é definida no build; mudar apenas o ambiente do contêiner não ativa o botão no pacote atual.
+Somente depois de publicar e verificar `POST /v1/connections` e `POST /v1/connections/{id}/provision`, o provisionamento e o isolamento da credencial administrativa, gere outro pacote com `NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE=enabled`. O pacote candidato também exige que a sessão seja de gestor e que a resposta autenticada de `GET /v1/connections` contenha `capabilities.whatsappSelfServe: true`. Sem essa confirmação, o primeiro acesso indica a implantação assistida. O vendedor acompanha o estado das linhas atribuídas. Uma criação interrompida pode ser retomada na mesma aba com a mesma chave de idempotência, inclusive após recarregar a página.
 
 Para reproduzir o pacote a partir da raiz do repositório, com Node 24 e as dependências instaladas:
 

@@ -26,8 +26,8 @@ const choices = [
   {status:"resolved",label:"Resolver conversa",icon:CheckCheck},
 ];
 
-function InboxOnboarding({session, lines}) {
-  const step = connectionNextStep(session.workspace.role === "manager", lines);
+function InboxOnboarding({session, connections}) {
+  const step = connectionNextStep(session.workspace.role === "manager", connections);
   return <FirstAccess icon={MessageCircle} preview="inbox" headingId="inbox-first-title"
       title={step.title} description={step.description}
       action={<ButtonLink variant="primary" shape="pill" href={step.href}>
@@ -164,7 +164,7 @@ export function ConnectedInbox({revision: listRevision, id, validId, context, se
   const mobileThread = mobile && !!id;
   if (!id && !inbox.confirmed) return <ReadState read={inbox} />;
   if (firstAccess) return <ReadState full read={connections}>{data =>
-    <InboxOnboarding session={session} lines={data.items} />}</ReadState>;
+    <InboxOnboarding session={session} connections={data} />}</ReadState>;
   return <div className={css.inbox} data-thread={!!id}>
     <section className={css.list} aria-label="Lista de atendimentos"><div className={css.listHead}>{!mobileThread && bar}
       <SearchField label="Buscar conversas" value={search} maxLength={80} onValueChange={setSearch} placeholder="Buscar conversas…" /><Pills size="sm" label="Filtro da caixa" value={filter} onChange={setFilter}

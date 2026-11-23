@@ -39,7 +39,7 @@ async function scenario(role,width) {
     }
     if(path==="connections" && state.connectionError) return json(res,state.connectionError,{error:{
       code:state.connectionError===403 ? "forbidden" : "temporarily_unavailable",message:"Falha ao carregar conexões."}});
-    if(path==="connections") return json(res,200,{items:state.line?[state.line]:[],nextCursor:null});
+    if(path==="connections") return json(res,200,{items:[state.line,state.sample].filter(Boolean),nextCursor:null,...(selfServe ? {capabilities:{whatsappSelfServe:role==="manager"}} : {})});
     if (state.pipeline && path==="team") return json(res,200,{items:[{id:user.id,name:"Equipe A",role:"seller"}],nextCursor:null});
     if (state.pipeline && path==="pipelines") return json(res,200,{items:[{id:pipelineId,name:"Comercial"}],defaultPipelineId:null,nextCursor:null});
     if (state.pipeline && path==="pipelines/"+pipelineId) {
@@ -126,6 +126,19 @@ async function scenario(role,width) {
     assert.equal(await page.getByRole("searchbox",{name:"Buscar oportunidade"}).count(),0);
     const channelAction = role==="manager" ? selfServe ? "Conectar WhatsApp" : "Ver orientações de conexão" : "Ver meus WhatsApps";
     assert.equal(await page.getByRole("link",{name:channelAction}).getAttribute("href"),"#whatsapps");
+    if(role==="manager" && selfServe) {
+      const descriptions=[
+        ["radar","Conecte o WhatsApp para a Zoe identificar quais clientes precisam de uma resposta primeiro."],
+        ["oportunidades","Conecte o WhatsApp para a Zoe encontrar pedidos de orçamento, objeções e sinais de compra nas conversas."],
+        ["alertas","Conecte o WhatsApp para acompanhar riscos de perda e interrupções da conexão."],
+      ];
+      for (const [hash,description] of descriptions) {
+        await page.goto(web.origin+"/#"+hash);
+        await page.getByText(description,{exact:true}).waitFor();
+        assert.equal(await page.getByRole("link",{name:channelAction}).getAttribute("href"),"#whatsapps");
+      }
+      await page.goto(web.origin+"/#radar");
+    }
     state.radar=true;
     await page.reload();
     await page.getByRole("link",{name:/Negociação em aberto/}).waitFor();
@@ -170,14 +183,26 @@ async function scenario(role,width) {
         await page.getByRole("heading",{name:"Toda conversa começa com uma conexão"}).waitFor();
       }
     }
+    state.sample={id:randomUUID(),name:"Exemplo",source:"synthetic",channel:"synthetic",status:"connected"};
     state.line={id:randomUUID(),name:"Linha de teste",channel:"whatsapp",status:"provisioning"};
     await page.reload();
     await page.getByText("Seu WhatsApp está em preparação",{exact:true}).waitFor();
     state.line.status="disconnected";
     await page.reload();
     await page.getByText("Confira a conexão do WhatsApp",{exact:true}).waitFor();
-    state.line.status="connected";
+    state.line.status="unavailable";
     await page.reload();
+    await page.getByRole("heading",{name:"Seu WhatsApp está indisponível"}).waitFor();
+    state.line=null;
+    await page.reload();
+    await page.getByRole("heading",{name:"Sua primeira leitura de exemplo"}).waitFor();
+    for (const hash of ["radar","oportunidades","alertas"]) {
+      await page.goto(web.origin+"/#"+hash);
+      await page.getByText("Inicie um diagnóstico para explorar como a Zoe organiza as conversas de teste.",{exact:true}).waitFor();
+      await page.getByRole("link",{name:"Iniciar diagnóstico"}).waitFor();
+    }
+    state.line={id:randomUUID(),name:"Comercial",channel:"whatsapp",source:"whatsapp",status:"connected"};
+    await page.goto(web.origin+"/#entrada");
     await page.getByText("Sua linha está pronta para a primeira análise",{exact:true}).waitFor();
     await page.getByRole("link",{name:"Iniciar diagnóstico"}).waitFor();
     state.conversations=[{id:randomUUID(),title:"Marina Costa",summary:"Pedido de orçamento",priority:"high"}];
@@ -199,7 +224,7 @@ async function scenario(role,width) {
     await page.goto(web.origin+"/#conversa/invalid");
     await page.getByText("Conversa inválida.",{exact:false}).waitFor();
     assert.equal(await page.getByText("Sua linha está pronta para a primeira análise",{exact:true}).count(),0);
-    state.line=null;
+    state.line=null;state.sample=null;
     await open("tarefas","Agenda livre");
     await open("catalogo","Seu catálogo começa aqui");
     assert.equal(await page.getByPlaceholder("Buscar item…").count(),0);

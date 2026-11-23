@@ -13,7 +13,7 @@ export function json(res,status,data) {
   res.writeHead(status,{"Content-Type":"application/json","Cache-Control":"no-store"});
   res.end(JSON.stringify(data));
 }
-export async function startFixtureWeb(bundle,port,handle) {
+export async function startFixtureWeb(bundle,port,handle,{localhostAlias=false}={}) {
   const root=resolve(bundle);
   const site=resolve(root,"site");
   const revision=(await readFile(resolve(root,"REVISION"),"utf8")).trim();
@@ -40,7 +40,16 @@ export async function startFixtureWeb(bundle,port,handle) {
       res.writeHead(200,{"Content-Type":mime[extname(file)]});res.end(bytes);
     } catch {res.writeHead(404).end();}
   });
-  const origin=await listen(web,port);
+  const address=await listen(web,port);
+  // Cookies are scoped to the hostname, independently of the preview port.
+  const origin=localhostAlias ? "http://localhost:"+web.address().port : address;
   bff=createV2Bff({apiOrigin,webOrigin:origin,serviceKey});
-  return {origin,revision,close:() => Promise.all([web,api].map(s=>new Promise(ok=>s.close(ok))))};
+  // At teardown Chromium can still hold a preconnected or polling socket.
+  function close() {
+    return Promise.all([web,api].map(server=>new Promise(resolve=>{
+      server.close(resolve);
+      server.closeAllConnections();
+    })));
+  }
+  return {origin,revision,close};
 }
