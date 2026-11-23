@@ -4,9 +4,11 @@ Este roteiro descreve o Web V2 público compilado com o override Traefik e o con
 
 ## Publicação de 23/11/2026
 
-A revisão `sha256:3fc3c1d8b7c4292c7618d345ea5b2dfebf28287553f34b8ab25ae170d8f5be26` está em produção. A consulta por HTTPS retornou HTTP 200, estado `ok` e essa revisão. As páginas iniciais da V1 e da V2 também responderam com HTTP 200. [Saúde da V2](https://v2.salesanalyzer.app/healthz)
+A V2 está em produção com a revisão `sha256:c6b9482ee53f4a186cef562aad116a318ff3a5eff2cfbd713530a67b3672ce99`, gerada a partir do commit `64e1d59`. A consulta por HTTPS retornou HTTP 200, estado `ok` e essa revisão. As páginas iniciais da V2 e da V1 também responderam com HTTP 200. [Saúde da V2](https://v2.salesanalyzer.app/healthz)
 
-Esta versão inclui os estados de primeiro acesso do catálogo, Pipeline, Uso, Radar, Ganhos e consultas da Zoe. O fluxo Radar → Conversa → Ganho foi testado com respostas locais do contrato da API.
+O pacote publicado tem SHA-256 `061c1087e86cd9bf69680705944196747c1f3eab390f2f49e2b92338a4ab429a`. A revisão anterior, `3fc3c1d8`, foi preservada para eventual reversão.
+
+Esta publicação padroniza o primeiro acesso e os botões de ação, compacta os cabeçalhos e corrige os estados vazios do Radar e de Retornos. O fluxo Radar → Conversa → Ganho foi validado com respostas locais da API. A homologação desse fluxo com vendedor e conversa reais continua pendente.
 
 O pacote público padrão compila `NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE=disabled`. Assim, os botões de criar e provisionar uma linha nova ficam ocultos e nenhuma dessas rotas é chamada pela interface. O QR Code para **linhas já cadastradas** continua disponível ao gestor pela rota existente de pareamento. A tela de primeiro acesso orienta a configuração assistida e os estados vazios estão descritos em [v2-empty-states.md](v2-empty-states.md).
 
@@ -21,7 +23,7 @@ NEXT_PUBLIC_SALES_ACCESS_MODE=public NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE=disab
 O empacotador gera um diretório de contexto Docker e um `.tar.gz`. O nome gerado pode mudar; confira a revisão em `REVISION` e o SHA-256 do arquivo antes de transferir. Para montar uma imagem `linux/amd64` com o contexto já conferido:
 
 ```sh
-docker buildx build --platform linux/amd64 --load -t sales-analyzer-web:v2-public .artifacts/sales-v2-web-2aC4wv
+docker buildx build --platform linux/amd64 --load -t sales-analyzer-web:v2-public .artifacts/sales-v2-web-gqwqPI
 docker image save -o sales-v2-web-amd64.tar sales-analyzer-web:v2-public
 ```
 
