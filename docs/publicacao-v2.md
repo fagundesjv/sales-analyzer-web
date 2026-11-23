@@ -2,17 +2,11 @@
 
 Este roteiro descreve o Web V2 público compilado com o override Traefik e o contrato da API V2 conferido no commit `816a53d`. O Web é publicado em um projeto Docker próprio e atende somente `v2.salesanalyzer.app`; a configuração de `www.salesanalyzer.app` permanece no projeto atual.
 
-## Revisão publicada em 23/11/2026
+## Publicação de 23/11/2026
 
-- Arquivo: `.artifacts/sales-v2-web-wp7xgj.tar.gz`
-- SHA-256: `46024934c990bec2d3b9759d461293c9a6c1c20dc835c03737f70ff05de0348e`
-- Revisão informada por `/healthz`: `sha256:54ad35ae33edd219d8a14fb3f9a8fbc0b7a0d34cb83d1962bc374da9cea69a57`
+A revisão `sha256:3fc3c1d8b7c4292c7618d345ea5b2dfebf28287553f34b8ab25ae170d8f5be26` está em produção. A consulta por HTTPS retornou HTTP 200, estado `ok` e essa revisão. As páginas iniciais da V1 e da V2 também responderam com HTTP 200. [Saúde da V2](https://v2.salesanalyzer.app/healthz)
 
-O domínio respondeu por HTTPS com essa revisão em 23/11/2026.
-
-## Candidato com cobertura por rota
-
-O pacote `.artifacts/sales-v2-web-2aC4wv.tar.gz` inclui os ajustes de contexto do catálogo, Pipeline, Uso, Radar, Ganhos e consultas da Zoe. A revisão do candidato é `sha256:3fc3c1d8b7c4292c7618d345ea5b2dfebf28287553f34b8ab25ae170d8f5be26`. O SHA-256 do arquivo é `97b31efd3a8af6168cbf013b757228fc067d55d371add3211a48372de039c94c`. O draft PR prepara uma publicação posterior. A homologação destas mudanças usou o pacote compilado com respostas locais do contrato.
+Esta versão inclui os estados de primeiro acesso do catálogo, Pipeline, Uso, Radar, Ganhos e consultas da Zoe. O fluxo Radar → Conversa → Ganho foi testado com respostas locais do contrato da API.
 
 O pacote público padrão compila `NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE=disabled`. Assim, os botões de criar e provisionar uma linha nova ficam ocultos e nenhuma dessas rotas é chamada pela interface. O QR Code para **linhas já cadastradas** continua disponível ao gestor pela rota existente de pareamento. A tela de primeiro acesso orienta a configuração assistida e os estados vazios estão descritos em [v2-empty-states.md](v2-empty-states.md).
 
@@ -70,4 +64,4 @@ O Compose Stage do commit `816a53d` ainda configura Mailpit para e-mails de conv
 5. Se o atendimento real estiver habilitado, conferir o estado da linha, ativar atendimento no contato certo, enviar uma mensagem e confirmar recibo e histórico. Verificar também erro e repetição sem duplicação quando a resposta do provedor atrasar.
 6. Repetir login, Radar, conversa, ganho e convite em viewport de celular. Testar expiração de sessão, recarga da página e uma tentativa de acesso a empresa ou conversa sem permissão.
 
-Os testes locais de Host/Origin, cookie HTTPS e HTTP, login, expiração e logout passaram. O pacote público compilou e foi inspecionado localmente em tela estreita e larga. Este checklist público depende da implantação e de contas e dados reais no destino.
+Os testes locais de Host/Origin, cookie HTTPS e HTTP, login, expiração e logout passaram. O pacote público compilou e foi inspecionado localmente em tela estreita e larga. A homologação dos fluxos autenticados em produção requer contas e dados reais no destino.
