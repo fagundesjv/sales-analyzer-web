@@ -1,5 +1,6 @@
 .dashboard {
   margin-inline: auto;
+  width: 100%;
   display: grid;
   gap: var(--sales-section);
   min-width: 0;

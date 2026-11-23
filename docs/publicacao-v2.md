@@ -2,22 +2,32 @@
 
 Este roteiro descreve o Web V2 público compilado com o override Traefik e o contrato da API V2 conferido no commit `816a53d`. O Web é publicado em um projeto Docker próprio e atende somente `v2.salesanalyzer.app`; a configuração de `www.salesanalyzer.app` permanece no projeto atual.
 
-## Artefato conferido
+## Revisão publicada em 23/11/2026
 
-- Arquivo: `.artifacts/sales-v2-web-Z5YbzQ.tar.gz`
-- SHA-256: `f8df1e6610d43ac3377a77638120d06dc7c63cee5d2cf5f2ca5003a9f6b95819`
-- Revisão informada por `/healthz`: `sha256:4a60c97d22d139e393c2153e0fa6d8ac0f669bdb12c77dc887ad8e1162d832fe`
+- Arquivo: `.artifacts/sales-v2-web-wp7xgj.tar.gz`
+- SHA-256: `46024934c990bec2d3b9759d461293c9a6c1c20dc835c03737f70ff05de0348e`
+- Revisão informada por `/healthz`: `sha256:54ad35ae33edd219d8a14fb3f9a8fbc0b7a0d34cb83d1962bc374da9cea69a57`
 
-Para reproduzir o pacote a partir da worktree acima, com Node 24 e as dependências instaladas:
+O domínio respondeu por HTTPS com essa revisão em 23/11/2026.
+
+## Candidato com cobertura por rota
+
+O pacote `.artifacts/sales-v2-web-2aC4wv.tar.gz` inclui os ajustes de contexto do catálogo, Pipeline, Uso, Radar, Ganhos e consultas da Zoe. A revisão do candidato é `sha256:3fc3c1d8b7c4292c7618d345ea5b2dfebf28287553f34b8ab25ae170d8f5be26`. O SHA-256 do arquivo é `97b31efd3a8af6168cbf013b757228fc067d55d371add3211a48372de039c94c`. O draft PR prepara uma publicação posterior. A homologação destas mudanças usou o pacote compilado com respostas locais do contrato.
+
+O pacote público padrão compila `NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE=disabled`. Assim, os botões de criar e provisionar uma linha nova ficam ocultos e nenhuma dessas rotas é chamada pela interface. O QR Code para **linhas já cadastradas** continua disponível ao gestor pela rota existente de pareamento. A tela de primeiro acesso orienta a configuração assistida e os estados vazios estão descritos em [v2-empty-states.md](v2-empty-states.md).
+
+Somente depois de publicar e verificar `POST /v1/connections` e `POST /v1/connections/{id}/provision`, o provisionamento e o isolamento da credencial administrativa, gere outro pacote com `NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE=enabled`. Essa capacidade é definida no build; mudar apenas o ambiente do contêiner não ativa o botão no pacote atual.
+
+Para reproduzir o pacote a partir da raiz do repositório, com Node 24 e as dependências instaladas:
 
 ```sh
-NEXT_PUBLIC_SALES_ACCESS_MODE=public npm run package:privado
+NEXT_PUBLIC_SALES_ACCESS_MODE=public NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE=disabled npm run package:privado
 ```
 
 O empacotador gera um diretório de contexto Docker e um `.tar.gz`. O nome gerado pode mudar; confira a revisão em `REVISION` e o SHA-256 do arquivo antes de transferir. Para montar uma imagem `linux/amd64` com o contexto já conferido:
 
 ```sh
-docker buildx build --platform linux/amd64 --load -t sales-analyzer-web:v2-public .artifacts/sales-v2-web-Z5YbzQ
+docker buildx build --platform linux/amd64 --load -t sales-analyzer-web:v2-public .artifacts/sales-v2-web-2aC4wv
 docker image save -o sales-v2-web-amd64.tar sales-analyzer-web:v2-public
 ```
 

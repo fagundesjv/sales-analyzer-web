@@ -5,6 +5,7 @@ import {Building2, Users} from "lucide-react";
 import {SalesFrame} from "../sales-frame";
 import {settingsSections} from "../settings-home";
 import {DetailPage, DetailRows, DetailText} from "../../src/ui/os/detail";
+import {EmptyState} from "../../src/ui/os/empty-state";
 import {useV2Action, useV2Page, useV2Read} from "../../lib/v2-client";
 import skin from "../../src/ui/os/os-theme.module.css";
 import gate from "../portal.module.css";
@@ -78,12 +79,18 @@ function ConnectedTeam({session,context}) {
   const manager = session.workspace.role === "manager";
   const page = useV2Page(manager ? "team" : null,context);
   return <DetailPage title="Equipe" icon={Users} description={session.workspace.name}
-    actions={manager && <InviteSeller workspace={session.workspace} context={context} />}>
+    actions={manager && page.data?.items.length > 0 && <InviteSeller workspace={session.workspace} context={context} />}>
     {manager ? <>
       <ReadState read={page}>{({items}) => items.length ? <ReadOnlyTeamDirectory members={items} /> :
-        <DetailText>{page.previous ? "Nenhum integrante nesta página." : "Nenhum integrante nesta empresa."}</DetailText>}</ReadState>
+        <EmptyState icon={Users} preview={page.previous ? undefined : "team"} title={page.previous ? "Esta página está vazia" : "Sua equipe começa aqui"}
+          description={page.previous ? "Volte para conferir os integrantes anteriores." :
+            "Convide o primeiro vendedor. O convite chega por e-mail."}
+          action={page.previous ? <Button size="sm" variant="secondary" onClick={page.previous}>Página anterior</Button> :
+            <InviteSeller workspace={session.workspace} context={context} />} />}</ReadState>
       <CursorNav page={page} label="Páginas da equipe" />
-    </> : <DetailText>Somente gestores podem consultar a equipe da empresa.</DetailText>}
+    </> : <EmptyState icon={Users} size="section" title="Equipe disponível para gestores"
+      description="O gestor da empresa administra convites e integrantes. Você pode consultar seus dados na página Empresa."
+      action={<ButtonLink href="#empresa" variant="secondary" size="sm">Abrir empresa</ButtonLink>} />}
   </DetailPage>;
 }
 function Workspace({session, onSession, route, dark, changeTheme}) {
@@ -122,7 +129,7 @@ function Workspace({session, onSession, route, dark, changeTheme}) {
   else if (page === "alertas") content = <ConnectedAlerts session={session} context={context} />;
   else if (page === "catalogo") content = <ConnectedCatalog session={session} context={context} />;
   else if (page === "plano") content = <ConnectedCredits session={session} context={context} />;
-  else content = <DetailPage title={title}><DetailText>Esta área ainda aguarda integração com o backend da V2.</DetailText>
+  else content = <DetailPage title={title}><DetailText>Esta área ainda não está disponível.</DetailText>
     <a href="#radar">Abrir Radar</a></DetailPage>;
   return <SalesFrame route={route} area={area} title={title} live={{session, logout:signOut}} threads={{}}
     chatHistory={isChat && <ZoeHistory history={chatHistory} route={route} />}

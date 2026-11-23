@@ -6,7 +6,8 @@ const attendanceSend = new RegExp("^" + attendance + "/messages$");
 const routes = [
   ["POST", "auth/session"], ["DELETE", "auth/session"], ["GET", "session"],
   ["POST", "auth/recovery"], ["POST", "auth/recovery/confirm"],
-  ["PUT", "session/workspace"], ["GET", "connections"], ["GET", "connections/" + uuid + "/status"],
+  ["PUT", "session/workspace"], ["GET", "connections"], ["POST", "connections"], ["GET", "connections/" + uuid + "/status"],
+  ["POST", "connections/" + uuid + "/provision"],
   ["GET", "connections/" + uuid + "/diagnostic-schedule"], ["PUT", "connections/" + uuid + "/diagnostic-schedule"],
   ["POST", "connections/" + uuid + "/pairing"], ["POST", "diagnostics"],
   ["GET", "diagnostics"], ["GET", "summary"], ["GET", "conversations"], ["GET", "budget/usage"], ["GET","team"],
@@ -160,7 +161,7 @@ export function createV2Bff({apiOrigin, webOrigin, serviceKey, network = "loopba
       }
       send(response.status, data);
     } catch (error) {
-      send(error.status || 503, {error:{code:error.code === "stale_context" ? error.code : undefined, message:error.status ? error.message : "O backend da V2 está indisponível. Tente novamente."}});
+      send(error.status || 503, {error:{code:error.code === "stale_context" ? error.code : undefined, message:error.status ? error.message : "O serviço está indisponível. Tente novamente."}});
     }
   };
 }

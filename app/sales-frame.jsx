@@ -284,7 +284,7 @@ export function SalesFrame({
         onSearch={() => setSearching(true)}
         onBack={() => window.history.back()}
         onForward={() => window.history.forward()}
-        notice={live ? "V2 · Homologação" : portalEnabled && ["uso","whatsapps"].includes(path) ? "Portal da empresa" : "Dados de exemplo"}
+        notice={live || process.env.NEXT_PUBLIC_SALES_ACCESS_MODE === "public" ? undefined : portalEnabled && ["uso","whatsapps"].includes(path) ? "Portal da empresa" : "Dados de exemplo"}
         wide={isChat}
         columnLabel="Histórico da Zoe"
         column={

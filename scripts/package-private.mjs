@@ -10,13 +10,16 @@ const root = fileURLToPath(new URL("../",import.meta.url));
 const accessMode = process.env.NEXT_PUBLIC_SALES_ACCESS_MODE || "private";
 if (!["private","public"].includes(accessMode))
   throw new Error("NEXT_PUBLIC_SALES_ACCESS_MODE deve ser private ou public.");
+const whatsappSelfServe = process.env.NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE || "disabled";
+if (!["enabled","disabled"].includes(whatsappSelfServe))
+  throw new Error("NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE deve ser enabled ou disabled.");
 const stage = await mkdtemp(join(root,".v2-package-"));
 const dest = join(root,".artifacts");
 await mkdir(dest,{recursive:true});
 const modulesRoot = dirname(await realpath(join(root,"node_modules")));
 const env = {PATH:process.env.PATH, HOME:stage, TMPDIR:tmpdir(), CI:"1", NODE_ENV:"production",
   NEXT_TELEMETRY_DISABLED:"1", SALES_WEB_MODE:"integrated", SALES_PACKAGE_ROOT:modulesRoot,
-  NEXT_PUBLIC_SALES_ACCESS_MODE:accessMode};
+  NEXT_PUBLIC_SALES_ACCESS_MODE:accessMode,NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE:whatsappSelfServe};
 
 async function hashSources(hash, directory, prefix) {
   const entries = await readdir(directory,{withFileTypes:true});
@@ -56,6 +59,7 @@ try {
     hash.update(path + "\0" + bytes.length + "\0").update(bytes);
   }
   hash.update("NEXT_PUBLIC_SALES_ACCESS_MODE\0" + accessMode + "\0");
+  hash.update("NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE\0" + whatsappSelfServe + "\0");
   const revision = "sha256:" + hash.digest("hex");
   execFileSync(process.execPath,[join(root,"node_modules/next/dist/bin/next"),"build"],{cwd:stage,env,stdio:"inherit"});
   const out = join(stage,"out");

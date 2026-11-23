@@ -1,12 +1,13 @@
 "use client";
 import {useEffect, useState} from "react";
 import {Button, Input, SearchField} from "@content-ventures/design-system/v3";
-import {Package, Plus, SlidersHorizontal} from "lucide-react";
+import {ChevronLeft, Package, Plus, SearchX, SlidersHorizontal} from "lucide-react";
 import {CatalogItems, CatalogViewSwitch} from "../catalog-browser";
 import {reaisFromCents, ReaisField} from "../operation-fields";
 import {DetailPage, DetailRows} from "../../src/ui/os/detail";
 import {Pills} from "../../src/ui/os/pills";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
+import {EmptyState} from "../../src/ui/os/empty-state";
 import {parseMoney} from "../../lib/operation";
 import {useV2Action, useV2Page} from "../../lib/v2-client";
 import {CursorNav, ReadState} from "./read-state";
@@ -85,17 +86,28 @@ function CatalogEditor({item, kind, manager, context, close, saved, reload}) {
   </ResponsiveDialog>;
 }
 
-function CatalogPage({path, context, kind, manager, view, open, filtered, clear}) {
+function CatalogPage({path, context, kind, manager, view, open, filtered, clear, onInventory}) {
   const page = useV2Page(path,context);
+  useEffect(() => {
+    if (page.data) onInventory(filtered || !!page.previous || page.data.items.length > 0);
+  },[page.data,filtered,page.previous,onInventory]);
   return <>
     <ReadState read={page}>{({items}) => <div className={s.inventoryScroll} data-view={view}
       aria-label="Resultados do catálogo" role="region" tabIndex={0}>
       {items.length ? <CatalogItems service={kind === "service"} view={view} price={price}
         rows={items.map((item,index) => ({item:{...item,stock:availability[item.availability]},index}))}
         onOpen={index => open(items[index])} actionLabel={manager ? "Editar" : "Ver"} /> :
-        <div role="status" className={s.empty}>{filtered ? <>
-          <p>Nenhum item corresponde aos filtros.</p><Button size="sm" variant="secondary" onClick={clear}>Limpar filtros</Button>
-        </> : page.previous ? "Nenhum item nesta página." : "Nenhum " + noun(kind) + " cadastrado."}</div>}
+        <EmptyState size="section" icon={filtered ? SearchX : Package} preview={filtered || page.previous ? undefined : kind === "service" ? "services" : "catalog"}
+          title={filtered ? "Nenhum item encontrado" : page.previous ? "Esta página está vazia" :
+            kind === "service" ? "Os serviços da equipe começam aqui" : "Seu catálogo começa aqui"}
+          description={filtered ? "Tente outro nome ou disponibilidade para encontrar o que procura." :
+            page.previous ? "Volte para conferir os itens da página anterior." :
+            manager ? "Cadastre o primeiro " + noun(kind) + " para a equipe consultar durante o atendimento." :
+            "O gestor ainda não cadastrou " + (kind === "service" ? "serviços" : "produtos") + " para esta empresa."}
+          action={filtered ? <Button size="sm" variant="secondary" onClick={clear}>Limpar filtros</Button> :
+            page.previous ? <Button size="sm" variant="secondary" icon={ChevronLeft} onClick={page.previous}>Página anterior</Button> :
+            manager ? <Button size="sm" variant="primary" icon={Plus} onClick={() => open(null)}>
+              Adicionar {noun(kind)}</Button> : null} />}
     </div>}</ReadState>
     <CursorNav label="Páginas do catálogo" page={page} className={s.pager} />
   </>;
@@ -111,6 +123,7 @@ export function ConnectedCatalog({context,session}) {
   const [filtersOpen,setFiltersOpen] = useState(false);
   const [editor,setEditor] = useState(null);
   const [revision,setRevision] = useState(0);
+  const [catalogHasItems,setCatalogHasItems] = useState(true);
   const [notice,setNotice] = useState("");
   const term = text.trim();
   useEffect(() => {
@@ -127,7 +140,7 @@ export function ConnectedCatalog({context,session}) {
   return <div data-stable-phone-tabs><DetailPage title="Produtos e serviços" icon={Package} description={session.workspace.name}>
     <section className={s.directory} aria-label="Catálogo"><div className={s.head}>
       <Pills label="Tipo de item" items={kinds} value={kind} onChange={value => {setKind(value);clear();}} />
-      {manager && <Button icon={Plus} variant="primary" aria-label={"Adicionar " + noun(kind)}
+      {manager && catalogHasItems && <Button icon={Plus} variant="primary" aria-label={"Adicionar " + noun(kind)}
         onClick={() => {setEditor({item:null});setNotice("");}}>Adicionar<span className={s.addNoun}>{" " + noun(kind)}</span></Button>}
     </div>
     <div className={s.catalogTools} data-open={filtersOpen}>
@@ -145,7 +158,8 @@ export function ConnectedCatalog({context,session}) {
     </div>
     {notice && <p role="status" className={css.notice}>{notice}</p>}
     {term !== q ? <p role="status">Buscando itens…</p> : <CatalogPage key={revision + path} path={path} context={context}
-      kind={kind} manager={manager} view={view} open={item => {setEditor({item});setNotice("");}} filtered={!!(q || status)} clear={clear} />}
+      kind={kind} manager={manager} view={view} open={item => {setEditor({item});setNotice("");}}
+      filtered={!!(q || status)} clear={clear} onInventory={setCatalogHasItems} />}
     </section>
     {editor && <CatalogEditor item={editor.item} kind={kind} manager={manager} context={context}
       close={() => setEditor(null)} saved={(result,archived) => {

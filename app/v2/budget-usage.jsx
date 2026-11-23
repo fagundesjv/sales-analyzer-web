@@ -1,8 +1,10 @@
 "use client";
 import {useState} from "react";
-import {Activity} from "lucide-react";
+import {Activity, CalendarDays, LockKeyhole} from "lucide-react";
+import {Button, ButtonLink} from "@content-ventures/design-system/v3";
 import {DetailPage, DetailRows, DetailSection, DetailText} from "../../src/ui/os/detail";
 import {StatTiles} from "../../src/ui/os/stat-tiles";
+import {EmptyState} from "../../src/ui/os/empty-state";
 import {useV2Read} from "../../lib/v2-client";
 import {ReadState} from "./read-state";
 
@@ -16,7 +18,7 @@ function usd(micros) {
   return "US$ " + integers.format(amount / 1000000n) + "," + fraction;
 }
 
-function UsageResult({data, period, currentMonth, workspaceId}) {
+function UsageResult({data, period, currentMonth, workspaceId, showCurrent}) {
   if (data.workspaceId !== workspaceId || data.period !== period)
     return <p role="alert">A leitura recebida corresponde a outra empresa ou período. Consulte o mês novamente.</p>;
   const metered = data.mode === "provider_metered";
@@ -26,13 +28,16 @@ function UsageResult({data, period, currentMonth, workspaceId}) {
   const blocked = cost.blockedReason === "provider_usage_above_cap";
   const available = blocked ? "0" : cost.availableMicros;
   const units = currentTariff?.tokenizer === "utf8-bytes-v1" ? "bytes UTF-8" : "tokens";
-  const simulatedTariff = ["utf8-bytes-v1","responses-wire-bytes-v1"].includes(currentTariff?.tokenizer);
+  const hasRecordedCost = cost.authorizedCount > 0 || cost.indeterminateCount > 0 || cost.settledCount > 0 ||
+    BigInt(cost.reservedMicros) > 0n || BigInt(cost.settledMicros) > 0n;
   const past = period < currentMonth;
   const noHistory = past && commercial.limitCalls === null && cost.limitMicros === null &&
     !commercial.reservedCalls && !commercial.consumedCalls && !cost.authorizedCount && !cost.indeterminateCount && !cost.settledCount &&
     BigInt(cost.reservedMicros) === 0n && BigInt(cost.settledMicros) === 0n;
   if (noHistory && !blocked) return <DetailSection title="Ciclo sem histórico">
-    <DetailText>Nenhum consumo ou orçamento foi registrado neste mês. Escolha outro mês para consultar.</DetailText>
+    <EmptyState icon={CalendarDays} preview="usage" title="Sem uso registrado neste mês"
+      description="Não há consumo ou orçamento nesse ciclo. Confira o mês atual para acompanhar a operação."
+      action={<Button size="sm" variant="secondary" onClick={showCurrent}>Ver mês atual</Button>} />
   </DetailSection>;
 
   return <>
@@ -44,9 +49,14 @@ function UsageResult({data, period, currentMonth, workspaceId}) {
       ]} />
     </DetailSection>
     <DetailSection title="Custo de execução" meta="USD">
+      {!past && !hasRecordedCost && !blocked && commercial.consumedCalls === 0 && commercial.reservedCalls === 0 &&
+        <EmptyState size="compact" icon={Activity} preview="usage" title="Nenhuma execução neste ciclo"
+          description="O consumo aparece aqui quando uma análise da equipe é processada."
+          action={<ButtonLink href="#diagnosticos" size="sm">Ver diagnósticos</ButtonLink>} />}
       <DetailText>{metered
         ? "O custo usa os tokens confirmados pelo provedor e a versão da tarifa aplicada à análise. Esse valor acompanha o orçamento. A fatura final é apurada pelo provedor."
-        : "A análise dos diagnósticos usa uma tarifa simulada."}</DetailText>
+        : hasRecordedCost ? "Os valores deste ciclo são estimativas calculadas sem medição do provedor."
+        : "Nenhum custo de execução foi registrado neste ciclo."}</DetailText>
       {blocked && <div role="status"><strong>Novos envios para análise bloqueados neste mês</strong>
         <DetailText>O uso informado pelo provedor excedeu o limite autorizado. A reserva da empresa permanece registrada neste mês.</DetailText></div>}
       {cost.limitMicros === null && <strong>{past ? "Sem orçamento registrado neste ciclo" : "Sem orçamento configurado para este ciclo"}</strong>}
@@ -59,7 +69,7 @@ function UsageResult({data, period, currentMonth, workspaceId}) {
       ]} />
       {cost.indeterminateCount > 0 && <DetailText>A reserva total já inclui o valor das execuções que aguardam confirmação.</DetailText>}
     </DetailSection>
-    {currentTariff && <details><summary>{simulatedTariff ? "Tarifa simulada vigente" : "Tarifa vigente de controle do orçamento"}</summary>
+    {currentTariff && <details><summary>{metered ? "Tarifa vigente de controle do orçamento" : "Tarifa usada na estimativa"}</summary>
       <DetailRows items={[
         {label:"Modelo",value:currentTariff.model},
         {label:"Versão da tarifa",value:currentTariff.version},
@@ -84,8 +94,10 @@ export function BudgetUsage({session,context}) {
         <input type="month" value={period} min="1000-01" max={currentMonth} onChange={event => setPeriod(event.target.value)} />
       </label>
       {validPeriod ? <ReadState read={usage}>{data => <UsageResult data={data} period={period}
-        currentMonth={currentMonth} workspaceId={session.workspace.id} />}</ReadState> :
+        currentMonth={currentMonth} workspaceId={session.workspace.id} showCurrent={() => setPeriod(currentMonth)} />}</ReadState> :
         <p role="status">Escolha o mês atual ou um mês anterior.</p>}
-    </> : <DetailText>Somente gestores podem consultar o uso da empresa.</DetailText>}
+    </> : <EmptyState icon={LockKeyhole} title="Uso disponível para gestores"
+      description="O gestor acompanha o consumo e o orçamento da empresa. Você pode seguir para o seu trabalho no Dashboard."
+      action={<ButtonLink href="#dashboard" size="sm" variant="secondary">Abrir Dashboard</ButtonLink>} />}
   </DetailPage>;
 }

@@ -1,10 +1,11 @@
 "use client";
 import {useState} from "react";
-import {Button, List, ListItem} from "@content-ventures/design-system/v3";
-import {Bell} from "lucide-react";
-import {DetailPage, DetailSection, DetailText} from "../../src/ui/os/detail";
+import {Button, ButtonLink, List, ListItem} from "@content-ventures/design-system/v3";
+import {Bell, BellOff, SearchX} from "lucide-react";
+import {DetailPage, DetailSection} from "../../src/ui/os/detail";
 import {Pills} from "../../src/ui/os/pills";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
+import {EmptyState} from "../../src/ui/os/empty-state";
 import {useV2Action, useV2Page, useV2Read} from "../../lib/v2-client";
 import {CursorNav, ReadState} from "./read-state";
 import s from "./alerts.module.css";
@@ -110,7 +111,14 @@ export function ConnectedAlerts({session,context}) {
       <ReadState read={page}>{data=>data.items.length ? <List label="Lista de alertas">
         {data.items.map(alert=><AlertItem alert={alert} key={alert.id+":"+(alert.readAt??"")} context={context}
           changed={()=>{if (readFilter!=="all") page.retry();}} />)}
-      </List> : <DetailText>Nenhum alerta neste recorte.</DetailText>}</ReadState>
+      </List> : <EmptyState icon={params.size ? SearchX : BellOff} preview={params.size || page.previous ? undefined : "alerts"}
+        title={params.size ? "Nenhum alerta com estes filtros" : page.previous ? "Esta página está vazia" : "Nenhum alerta por enquanto"}
+        description={params.size ? "Tente outra combinação de leitura e tipo." :
+          page.previous ? "Volte para a página anterior de alertas." :
+          "Quando a análise encontrar perdas, riscos ou desconexões, os sinais aparecerão aqui."}
+        action={params.size ? <Button variant="secondary" size="sm" onClick={() => {setReadFilter("all");setKind("");}}>Limpar filtros</Button> :
+          page.previous ? <Button variant="secondary" size="sm" onClick={page.previous}>Página anterior</Button> :
+          <ButtonLink href="#radar" variant="secondary" size="sm">Abrir Radar</ButtonLink>} />}</ReadState>
     </DetailSection>
     {rules && <Rules context={context} close={()=>setRules(false)} saved={saved} />}
   </DetailPage></div>;

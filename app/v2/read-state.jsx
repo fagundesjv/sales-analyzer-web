@@ -1,6 +1,9 @@
 import {Button} from "@content-ventures/design-system/v3";
 
-export function ReadState({read, children}) {
+export function ReadState({read, children, notFound}) {
+  if (read.error?.status === 403 && ["forbidden","permission_denied","insufficient_permissions"].includes(read.error.code))
+    return <p role="alert">Seu perfil não tem permissão para acessar estes dados.</p>;
+  if (read.error?.status === 404 && notFound) return notFound;
   if (read.error) return <div role="alert" className="flow"><p>{read.error.message}</p>
     <Button size="sm" variant="secondary" onClick={read.retry}>Tentar novamente</Button></div>;
   if (read.loading) return <p role="status" aria-live="polite">Carregando…</p>;

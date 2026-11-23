@@ -1,8 +1,9 @@
 "use client";
 import {useEffect, useState} from "react";
 import {Button, ButtonLink, Input, PageHeader} from "@content-ventures/design-system/v3";
-import {ArrowUpRight, MessageCircle} from "lucide-react";
+import {ArrowUpRight, KanbanSquare, MessageCircle, SearchX} from "lucide-react";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
+import {EmptyState} from "../../src/ui/os/empty-state";
 import {useV2Action, useV2Page, useV2Read} from "../../lib/v2-client";
 import {CursorNav, ReadState} from "./read-state";
 import boardStyle from "../recovery-desk.module.css";
@@ -131,7 +132,10 @@ function Lane({stage,boardId,owner,context,showMove}) {
       <div className={boardStyle.dealFoot}><small>{card.ownerName}</small>
         <Button size="sm" variant="ghost" aria-label={"Mover negociação "+card.title} onClick={() => showMove(card)}>Mover</Button>
       </div>
-    </article>) : <p className={boardStyle.empty}>Nenhuma negociação nesta etapa.</p>}</ReadState>
+    </article>) : <EmptyState size="compact" icon={KanbanSquare}
+      title={page.previous ? "Esta página está vazia" : owner ? "Sem negociações deste responsável" : "Etapa livre"}
+      description={page.previous ? "Volte à página anterior." : "As conversas analisadas nesta etapa aparecerão aqui."}
+      action={page.previous ? <Button size="sm" variant="ghost" onClick={page.previous}>Página anterior</Button> : null} />}</ReadState>
   </section>;
 }
 export function ConnectedPipeline({session,context}) {
@@ -144,7 +148,7 @@ export function ConnectedPipeline({session,context}) {
   const directory=useChoices("pipelines",context,revision);
   const people=useChoices(manager?"team":null,context);
   const [preferred,setPreferred] = useState("");
-  const id=selected || directory.data?.defaultPipelineId || preferred;
+  const id=selected || directory.data?.defaultPipelineId || directory.items[0]?.id || preferred;
   useEffect(() => {if (directory.data?.defaultPipelineId) setPreferred(directory.data.defaultPipelineId);},
     [directory.data?.defaultPipelineId]);
   const query=new URLSearchParams({limit:cardsPerStage,...(owner?{assigneeId:owner}:{})});
@@ -162,7 +166,11 @@ export function ConnectedPipeline({session,context}) {
   return <div className={boardStyle.desk} data-stable-phone-tabs>
     <PageHeader title="Pipeline comercial" description="Acompanhe as negociações por etapa."
       actions={<ButtonLink href="#tarefas" icon={MessageCircle}>Retornos agendados</ButtonLink>} />
-    {!id ? <ReadState read={directory}>{() => <p>Nenhum funil disponível.</p>}</ReadState> : <>
+    {!id ? <ReadState read={directory}>{() => <EmptyState size="page" icon={KanbanSquare} preview="pipeline"
+      title="Organize as negociações por etapa"
+      description={manager ? "Crie o primeiro funil para acompanhar as conversas analisadas." :
+        "O gestor ainda não configurou um funil para esta empresa."}
+      action={manager ? <Button variant="primary" onClick={() => setDialog({kind:"pipeline"})}>Criar funil</Button> : null} />}</ReadState> : <>
       <div className={pageStyle.toolbar}>
         <label>Funil<select aria-label="Funil" value={id} onChange={event => {setSelected(event.target.value);setNotice("");}}>
           {!directory.items.some(item => item.id===id) && <option value={id}>{board.data?.name ?? "Funil selecionado"}</option>}
@@ -183,7 +191,11 @@ export function ConnectedPipeline({session,context}) {
       {directory.error && <ReadState read={directory}>{() => null}</ReadState>}
       {manager && people.error && <ReadState read={people}>{() => null}</ReadState>}
       {notice && <p role="status">{notice}</p>}
-      <ReadState read={board}>{data => <div className={boardStyle.board+" "+pageStyle.board}
+      <ReadState read={board}>{data => owner && data.stages.every(stage => stage.total === 0) ?
+        <EmptyState size="section" icon={SearchX} title="Nenhuma negociação deste responsável"
+          description="Mostre toda a equipe para consultar as negociações deste funil."
+          action={<Button size="sm" onClick={() => setOwner("")}>Mostrar toda a equipe</Button>} /> :
+        <div className={boardStyle.board+" "+pageStyle.board}
         aria-label="Quadro de negociações">
         {data.stages.map(stage => <Lane key={[id,owner,revision,stage.id].join("/")} stage={stage} boardId={id}
           owner={owner} context={context} showMove={card => setDialog({kind:"move",card,board:data})} />)}

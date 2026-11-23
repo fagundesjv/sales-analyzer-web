@@ -11,6 +11,17 @@
 .code { display: grid; justify-items: center; text-align: center; gap: var(--s-3); }
 .code img { max-width: 100%; height: auto; padding: 10px; background: white; border-radius: var(--r-md); }
 
+.create { display: grid; gap: var(--s-4); min-width: 0; }
+.create label { display: grid; gap: var(--s-2); min-width: 0; }
+.create input, .create select { min-width: 0; max-width: 100%; }
+.create select { width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid var(--line);
+  border-radius: var(--r-md); background: var(--paper); color: var(--ink); font: var(--t-body); }
+.create p { margin: 0; color: var(--muted); font: var(--t-small); }
+.create > button { justify-self: start; }
+.empty { display: grid; gap: var(--s-2); padding: var(--sales-card-pad); border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg); background: var(--paper); }
+.empty strong { color: var(--ink); font: var(--t-body-strong); }
+
 .schedule { display: grid; gap: var(--s-3); min-width: 0; margin-top: var(--s-4);
   padding-top: var(--s-4); border-top: 1px solid var(--line); }
 .schedule h2, .schedule p, .activity, .activity dd { margin: 0; }
@@ -25,6 +36,8 @@
 .activity dt { color: var(--muted); font: var(--t-small); }
 .activity dd, .saved { font: var(--t-small-strong); overflow-wrap: anywhere; }
 @media (max-width: 600px) {
+  .create input, .create select { min-height: 44px; font-size: 16px; }
+  .create > button { width: 100%; }
   .fields { grid-template-columns: minmax(0, 1fr); }
   .fields input, .fields select { min-height: 44px; font-size: 16px; }
   .editor > button { width: 100%; }

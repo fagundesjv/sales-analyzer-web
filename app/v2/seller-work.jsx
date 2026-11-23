@@ -1,11 +1,12 @@
 "use client";
 import {useEffect, useState} from "react";
-import {Button} from "@content-ventures/design-system/v3";
-import {CalendarClock, Check, Pause, Play, Square} from "lucide-react";
+import {Button, ButtonLink} from "@content-ventures/design-system/v3";
+import {CalendarClock, CalendarDays, Check, Pause, Play, Square} from "lucide-react";
 import {IconAction} from "../../src/ui/os/icon-action";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
 import {DetailPage} from "../../src/ui/os/detail";
 import {Pills} from "../../src/ui/os/pills";
+import {EmptyState} from "../../src/ui/os/empty-state";
 import {inboxHref,localDate} from "../../lib/inbox";
 import {useV2Action,useV2Page} from "../../lib/v2-client";
 import {CursorNav,ReadState} from "./read-state";
@@ -108,7 +109,15 @@ export function ConnectedReturns({context}) {
       items={[{value:"open",label:"Em aberto"},{value:"today",label:"Até hoje"},{value:"done",label:"Concluídos"}]} /></div>
       <ReadState read={page}>{({items}) => items.length ? <ul className={a.list} aria-label="Retornos agendados">
         {items.map(task => <ReturnRow key={task.id} task={task} context={context} refresh={page.retry} />)}</ul> :
-        <div className={a.empty}><h2>{view === "done" ? "Nenhum retorno concluído" : "Agenda livre"}</h2><a href="#entrada">Abrir conversas</a></div>}</ReadState>
+        <EmptyState icon={CalendarDays} preview={view === "open" && !page.previous ? "returns" : undefined} title={page.previous ? "Esta página está vazia" :
+          view === "done" ? "Nenhum retorno concluído" : view === "today" ? "Tudo em dia por hoje" : "Agenda livre"}
+          description={page.previous ? "Volte para os retornos da página anterior." :
+            view === "done" ? "Os retornos concluídos aparecerão aqui." :
+            view === "today" ? "Não há retornos pendentes até hoje. Confira os próximos da agenda." :
+            "Agende o próximo contato diretamente em uma conversa."}
+          action={page.previous ? <Button variant="secondary" size="sm" onClick={page.previous}>Página anterior</Button> :
+            view === "today" ? <Button variant="secondary" size="sm" onClick={() => setView("open")}>Ver todos em aberto</Button> :
+            <ButtonLink href="#entrada" variant="secondary" size="sm">Abrir conversas</ButtonLink>} />}</ReadState>
       <CursorNav page={page} label="Páginas de retornos" /></div>
   </DetailPage>;
 }
