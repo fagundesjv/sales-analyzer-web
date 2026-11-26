@@ -15,6 +15,7 @@ import {inboxHref} from "../../lib/inbox";
 import {CursorNav, ReadState} from "./read-state";
 import {exactReais} from "./work-queue";
 import s from "./zoe.module.css";
+import {GroundedZoe} from "./zoe-grounded";
 
 const subjects = {
   summary: {label:"Resumo da operação", question:"Como está a minha operação?", icon:ChartColumn},
@@ -23,7 +24,7 @@ const subjects = {
 };
 const uuid = /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i;
 const when = new Intl.DateTimeFormat("pt-BR",{dateStyle:"short",timeStyle:"short"});
-const turnTitle = turn => turn.query.question || subjects[turn.query.type].question;
+const turnTitle = turn => turn.query.question || subjects[turn.query.type]?.question || "Consulta à Zoe";
 const turnHref = (turn, cursor) => "#zoe/" + turn.id + (cursor ? "/" + cursor : "");
 
 export function ZoeHistory({history, route}) {
@@ -194,7 +195,7 @@ function Chat({settings, turn, origin, source, session, context, onSaved}) {
   </>;
 }
 
-export function ConnectedZoe({route,session,context,history}) {
+function LegacyConnectedZoe({route,session,context,history}) {
   const [page,id,extra] = route.split("/");
   const settings = useV2Read("zoe/session",context);
   const saved = useSavedTurn(page === "zoe" ? id : null,extra,context,history);
@@ -215,3 +216,4 @@ export function ConnectedZoe({route,session,context,history}) {
     return view(null,null);
   }}</ReadState>;
 }
+export function ConnectedZoe(props){return props.session.capabilities?.zoeChat===true?<GroundedZoe {...props} />:<LegacyConnectedZoe {...props} />;}

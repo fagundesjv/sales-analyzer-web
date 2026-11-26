@@ -1,4 +1,5 @@
 // Browser routes deliberately mirror only the operations consumed by the official Web UI.
+import {createStaffBff} from "./staff-bff.mjs";
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const attendance = "conversations/" + uuid + "/attendance";
 const attendanceStart = new RegExp("^" + attendance + "$");
@@ -18,6 +19,20 @@ const routes = [
   ["GET", "pipelines"], ["POST", "pipelines"], ["GET", "pipelines/" + uuid], ["PATCH", "pipelines/" + uuid],
   ["GET", "pipelines/" + uuid + "/stages/" + uuid + "/cards"], ["PUT", "conversations/" + uuid + "/pipeline"],
   ["GET", "diagnostics/" + uuid], ["GET", "radar"], ["GET", "conversations/" + uuid],
+  ["GET", "conversations/" + uuid + "/opportunities"], ["POST", "conversations/" + uuid + "/opportunities"],
+  ["GET", "opportunities/summary"], ["GET", "opportunities/" + uuid],
+  ["PUT", "opportunities/" + uuid + "/outcome"],
+  ["GET", "opportunities/" + uuid + "/(?:reading|actions|followups)"],
+  ["POST", "opportunities/" + uuid + "/(?:resolve|followups)"],
+  ["POST", "commercial/actions/" + uuid + "/reconcile"],
+  ["GET", "commercial/settings"], ["PUT", "commercial/settings"],
+  ["GET", "commercial/inbox"], ["GET", "commercial/sales"], ["GET", "commercial/report"],
+  ["GET", "automation/policies"], ["GET", "automation/policies/" + uuid], ["PUT", "automation/policies/" + uuid],
+  ["GET", "reading-settings"], ["PUT", "reading-settings"],
+  ["GET", "memory/search"], ["GET", "memory/sources/"+uuid],
+  ["POST", "memory/documents"], ["PUT", "memory/documents/"+uuid], ["DELETE", "memory/documents/"+uuid],
+  ["POST", "memory/materials"], ["GET", "memory/materials/"+uuid],
+  ["GET", "sources/capabilities"], ["POST", "sources/nowz"],
   ["GET", attendance], ["POST", attendance], ["POST", attendance + "/messages"],
   ["PUT", "conversations/" + uuid + "/favorite"], ["PUT", "conversations/" + uuid + "/outcome"],
   ["GET", "focus"], ["POST", "focus"], ["PATCH","focus/" + uuid],
@@ -25,6 +40,9 @@ const routes = [
   ["PUT", "conversations/" + uuid + "/outcome/confirmation"],
   ["GET", "zoe/session"], ["GET", "zoe/history"], ["POST", "zoe/queries"],
   ["GET", "zoe/turns/" + uuid + "/citations/[0-9]"],
+  ["GET", "zoe/chat"], ["GET", "zoe/chat/history"], ["POST", "zoe/turns"],
+  ["GET", "zoe/chat/runs/"+uuid], ["GET", "zoe/chat/turns/"+uuid], ["GET", "zoe/chat/turns/"+uuid+"/sources/[0-9]+"],
+  ["POST", "zoe/actions"], ["POST", "zoe/actions/"+uuid+"/confirm"], ["POST", "zoe/attachments"],
 ].map(([method, pattern]) => ({method, matches: new RegExp("^" + pattern + "$")}));
 const uuidValue = new RegExp("^" + uuid + "$");
 const contextValue = new RegExp("^" + uuid + "/" + uuid + "$");
@@ -32,22 +50,30 @@ const listQueries = {
   summary:["connectionId"], connections:["limit","cursor"], radar:["limit","cursor","q","outcome"],
   conversations:["limit","cursor","connectionId","q","outcome","favorite"], diagnostics:["limit","cursor","connectionId"],
   returns:["limit","cursor","status","conversationId","throughDate"],
-  "zoe/history":["limit","cursor"], "budget/usage":["period"], team:["limit","cursor"],
+  "zoe/history":["limit","cursor"], "zoe/chat/history":["limit","cursor"], "budget/usage":["period"], team:["limit","cursor"],
   "catalog/items":["limit","cursor","q","kind","status"], pipelines:["limit","cursor"], alerts:["limit","cursor","kind","read"],
+  "memory/search":["q","scope","conversationId","opportunityId","limit"],
+  "commercial/inbox":["filter","windowDays","connectionId","ownerId","q","favorite","order","signal","limit","cursor"],
+  "commercial/sales":["windowDays","connectionId","ownerId","q","limit","cursor"],
+  "commercial/report":["windowDays","connectionId","ownerId","q"],
 };
 const pipelineBoardPath = new RegExp("^pipelines/" + uuid + "$");
 const pipelineStagePath = new RegExp("^pipelines/" + uuid + "/stages/" + uuid + "/cards$");
+const opportunityListPath = new RegExp("^conversations/" + uuid + "/opportunities$");
 function queryFor(path, method, raw) {
   if (!raw) return "";
   const pipelineBoard = pipelineBoardPath.test(path), pipelineStage = pipelineStagePath.test(path);
-  const filters = pipelineBoard ? ["limit","assigneeId"] : pipelineStage ? ["limit","assigneeId","cursor"] : listQueries[path];
-  if (raw.length > 1200 || method !== "GET" || !Array.isArray(filters))
+  const filters = opportunityListPath.test(path) ? ["limit","cursor"] : pipelineBoard ? ["limit","assigneeId"] : pipelineStage ? ["limit","assigneeId","cursor"] : listQueries[path];
+  const memory = path === "memory/search";
+  const commercial=["commercial/inbox","commercial/sales","commercial/report"].includes(path);
+  if (raw.length > (memory ? 8000 : commercial?4000:1200) || method !== "GET" || !Array.isArray(filters))
     throw fail(400, "Consulta indisponível.");
   const params = new URLSearchParams(raw);
   for (const [name,value] of params) {
     if (!filters.includes(name) || params.getAll(name).length !== 1 ||
-        (name === "q" && (value.length > 80 || value.includes("\0"))) ||
-        (name === "limit" && (!/^(?:[1-9][0-9]?|100)$/.test(value) || ((path === "zoe/history" || path === "alerts" || pipelineBoard || pipelineStage) && Number(value) > 50))) ||
+        (name === "q" && (value.length > (memory ? 2000 : 80) || value.includes("\0"))) ||
+        (name === "limit" && (!/^(?:[1-9][0-9]?|100)$/.test(value) || ((memory || path === "zoe/history" || path === "zoe/chat/history" || path === "alerts" || pipelineBoard || pipelineStage) && Number(value) > 50))) ||
+        (name === "scope" && !["company","line","customer","opportunity","private"].includes(value)) ||
         (name === "outcome" && !["won","lost","resolved","open"].includes(value)) ||
         (name === "favorite" && !["true","false"].includes(value)) ||
         (name === "kind" && !(path === "alerts" ? ["risk","loss","disconnected"] : ["product","service"]).includes(value)) ||
@@ -55,8 +81,14 @@ function queryFor(path, method, raw) {
         (name === "status" && !(path === "catalog/items" ? ["available","on_request","unavailable","archived"] : ["open","completed"]).includes(value)) ||
         (name === "throughDate" && !/^\d{4}-\d{2}-\d{2}$/.test(value)) ||
         (name === "period" && !/^[1-9]\d{3}-(0[1-9]|1[0-2])$/.test(value)) ||
-        (["connectionId","conversationId","assigneeId"].includes(name) && !uuidValue.test(value)) ||
-        (name === "cursor" && !(["diagnostics","returns","alerts"].includes(path) ? /^[A-Za-z0-9_-]{1,160}$/.test(value) : uuidValue.test(value))))
+        (["connectionId","conversationId","opportunityId","assigneeId"].includes(name) && !uuidValue.test(value)) ||
+        (name === "ownerId" && !uuidValue.test(value)) ||
+        (name === "windowDays" && (!/^\d{1,2}$/.test(value)||Number(value)<1||Number(value)>90)) ||
+        (name === "filter" && !["em_risco","todas","esperando","quentes","mornos","frios","vendas","quentes_esperando","esperando_30","hoje","novos_hoje","vendas_hoje","sem_temperatura","resolvidos","pagos","perdidos","follow_up","anexos_cliente","atividade_24h","atividade_48h","pdf_cliente","imagem_cliente"].includes(value)) ||
+        (name === "order" && !["recentes","urgencia","valor_em_risco","valor_venda"].includes(value)) ||
+        (name === "signal" && !["sem_resposta","encaminhamento_sem_retorno","resposta_rasa","abertura_impessoal","compra_sem_triagem","pagamento_presencial_pendente","sem_retomada","demora","sem_proximo_passo","sem_sondagem"].includes(value)) ||
+        (name === "limit" && commercial && Number(value)>60) ||
+        (name === "cursor" && !(commercial?value.length>0&&value.length<=2048&&!/[\x00-\x20\x7f]/.test(value):["diagnostics","returns","alerts"].includes(path) ? /^[A-Za-z0-9_-]{1,160}$/.test(value) : uuidValue.test(value))))
       throw fail(400, "Filtro ou paginação inválida.");
   }
   return "?" + params.toString();
@@ -69,8 +101,8 @@ const upstreamDeadlines = new Map([
   ["auth/recovery/confirm", 17000],
 ]);
 
-async function bodyOf(req, limit) {
-  if (req.method === "GET" || req.method === "DELETE") return;
+async function bodyOf(req, limit, deleteBody = false) {
+  if (req.method === "GET" || req.method === "DELETE" && !deleteBody) return;
   if (req.headers["content-type"]?.split(";")[0] !== "application/json")
     throw fail(415, "Envie os dados em JSON.");
   const chunks = [];
@@ -86,7 +118,7 @@ async function bodyOf(req, limit) {
   catch { throw fail(400, "Confira os dados do formulário."); }
 }
 
-export function createV2Bff({apiOrigin, webOrigin, serviceKey, network = "loopback"}) {
+export function createV2Bff({apiOrigin, webOrigin, serviceKey, adminKey, network = "loopback"}) {
   const api = new URL(apiOrigin);
   const browserOrigin = new URL(webOrigin);
   const cookieScope = "; HttpOnly; SameSite=Strict; Path=/api/v2" +
@@ -95,7 +127,9 @@ export function createV2Bff({apiOrigin, webOrigin, serviceKey, network = "loopba
     network === "loopback" && api.protocol === "http:" && api.hostname === "127.0.0.1" && api.origin === apiOrigin;
   if (!allowed || !serviceKey || serviceKey.length < 32)
     throw new Error("Configure a origem privada e a chave de serviço da API V2.");
+  const staff = createStaffBff({apiOrigin,webOrigin,serviceKey,adminKey});
   return async function handle(req, res) {
+    if (req.url.startsWith("/api/v2/staff/")) return staff(req,res);
     res.setHeader("Cache-Control", "private, no-store");
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -126,11 +160,13 @@ export function createV2Bff({apiOrigin, webOrigin, serviceKey, network = "loopba
       const key = req.headers["idempotency-key"];
       const optionalCatalogKey = req.method === "PATCH" && path.startsWith("catalog/items/") && key === undefined;
       const optionalAttendanceKey = req.method === "POST" && attendanceStart.test(path) && key === undefined;
-      if (["POST","PUT","PATCH"].includes(req.method) && usesSession && path !== "session/workspace" && !path.endsWith("/pairing") && !optionalCatalogKey && !optionalAttendanceKey) {
+      const memoryDocument = /^memory\/documents(?:\/|$)/.test(path);
+      const memoryDelete = req.method === "DELETE" && memoryDocument;
+      if ((["POST","PUT","PATCH"].includes(req.method) || memoryDelete) && usesSession && path !== "session/workspace" && !path.endsWith("/pairing") && !optionalCatalogKey && !optionalAttendanceKey) {
         if (!key || !/^[A-Za-z0-9._:-]{1,128}$/.test(key)) throw fail(400, "Identificador da operação inválido.");
         headers["Idempotency-Key"] = key;
       }
-      const body = await bodyOf(req, req.method === "POST" && attendanceSend.test(path) ? 32 * 1024 : 8192);
+      const body = await bodyOf(req, path === "zoe/attachments"?17*1024*1024:path === "memory/materials" ? 8*1024*1024 : memoryDocument ? 1024*1024 : req.method === "POST" && attendanceSend.test(path) ? 32 * 1024 : 8192, memoryDelete);
       if (body !== undefined) headers["Content-Type"] = "application/json";
       const upstream = (endpoint, options) => fetch(api.origin + "/v1/" + endpoint, {
         headers, redirect: "error", signal: AbortSignal.timeout(upstreamDeadlines.get(path) ?? 9000), ...options,

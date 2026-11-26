@@ -18,6 +18,7 @@ const site = fileURLToPath(new URL("../site/",import.meta.url));
 const api = createV2Bff({
   network:"private", apiOrigin:process.env.SA_API_URL,
   webOrigin:origin.origin, serviceKey:process.env.SA_SERVICE_KEY,
+  adminKey:process.env.SA_ADMIN_KEY,
 });
 const revision = (await readFile(new URL("../REVISION",import.meta.url),"utf8")).trim();
 if (!/^sha256:[0-9a-f]{64}$/.test(revision)) throw new Error("Revisão do pacote inválida.");

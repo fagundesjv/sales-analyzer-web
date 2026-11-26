@@ -32,7 +32,7 @@ export function conversationMessages(evidence, history, posted) {
   return entries.sort((left,right) => Date.parse(left.at) - Date.parse(right.at));
 }
 
-export function AttendanceComposer({path, context, info, refreshing, reload, received}) {
+export function AttendanceComposer({path, context, info, refreshing, reload, received, channelLabel = "WhatsApp"}) {
   const [ticket,setTicket] = useState(null);
   const [dialog,setDialog] = useState(false);
   const [draft,setDraft] = useState("");
@@ -106,9 +106,9 @@ export function AttendanceComposer({path, context, info, refreshing, reload, rec
     send({key:intentKey.current.key,body:{ticket:ticket.ticket,text}});
   }
 
-  return <section className={s.panel} aria-label="Envio pelo WhatsApp">
+  return <section className={s.panel} aria-label={"Envio pelo "+channelLabel}>
     <div className={s.bar}><div className={s.channel}><MessageCircle size={16} aria-hidden="true" />
-      <strong>WhatsApp</strong>{info.mode && <Badge>{simulated ? "Simulação" : "Envio real"}</Badge>}
+      <strong>{channelLabel}</strong>{info.mode && <Badge>{simulated ? "Simulação" : "Envio real"}</Badge>}
     </div>
       {canStart && !ticket && !ambiguous && <Button size="sm" onClick={() => {setDialog(true);setError("");}}>Ativar atendimento</Button>}
       {(ambiguous || hasPending || ["sending","uncertain"].includes(lastStatus)) && <Button variant="ghost" size="sm" disabled={refreshing} onClick={reload}>Atualizar histórico</Button>}

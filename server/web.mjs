@@ -8,6 +8,7 @@ const handleApi = createV2Bff({
   apiOrigin: process.env.SA_API_URL || "http://127.0.0.1:4331",
   webOrigin: origin,
   serviceKey: process.env.SA_SERVICE_KEY,
+  adminKey: process.env.SA_ADMIN_KEY,
 });
 process.env.SALES_WEB_MODE = "integrated";
 const {default: next} = await import("next");

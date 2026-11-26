@@ -9,6 +9,8 @@ import {useV2Action,useV2Page,useV2Read} from "../../lib/v2-client";
 import {selfServeWhatsApp} from "../../lib/v2-capabilities";
 import {ReadState,CursorNav} from "./read-state";
 import {DailySchedule} from "./diagnostic-schedule";
+import {AutomationPolicy} from "./commercial-settings";
+import {SourceCatalog} from "./source-catalog";
 import s from "./channels.module.css";
 
 const stateLabel = {connected:"Conectado",connecting:"Aguardando conexão",disconnected:"Desconectado",
@@ -77,6 +79,7 @@ function ConnectionDialog({line, session, context, onClose, update}) {
       </div>;
     }}</ReadState>}
     {!provisioning && <DailySchedule connectionId={line.id} context={context} manager={session.workspace.role === "manager"} />}
+    {!provisioning && session.capabilities?.commercialEngine === true && !session.support && <AutomationPolicy connectionId={line.id} context={context} />}
   </ResponsiveDialog>;
 }
 
@@ -135,7 +138,9 @@ export function ConnectedChannels({catalog,session,context,connections}) {
     <section className={s.connector}><img width="32" height="32" src="/assets/whatsapp.svg" alt="" />
       <div><h2>WhatsApp</h2><p>Acompanhe os números da equipe e o estado de cada conexão.</p></div>
       <ButtonLink href="#whatsapps" variant="secondary">{manager ? "Gerenciar WhatsApps" : "Ver meus WhatsApps"}</ButtonLink>
-    </section></DetailPage>;
+    </section>
+    {session.capabilities?.memory === true && !session.support && <SourceCatalog context={context} session={session} />}
+  </DetailPage>;
   const dialogs = <>
     {creating && selfServeWhatsApp && <CreateConnection session={session} context={context} onClose={() => setCreating(false)}
       onUnconfirmed={connections.first} onCreated={created => {

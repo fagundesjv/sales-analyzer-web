@@ -52,7 +52,7 @@ try {
   }
   const hash = createHash("sha256");
   await hashSources(hash,stage,"");
-  for (const path of ["server/private-web.mjs","server/v2-bff.mjs","scripts/package-private.mjs",
+  for (const path of ["server/private-web.mjs","server/v2-bff.mjs","server/staff-bff.mjs","scripts/package-private.mjs",
     "deploy/private/Dockerfile","deploy/private/.dockerignore","deploy/private/compose.web.yaml",
     "deploy/private/compose.traefik.yaml"]) {
     const bytes = await readFile(join(root,path));
@@ -71,7 +71,7 @@ try {
   await mkdir(join(bundle,"server"));
   for (const path of ["index.html","assets","zoe-avatar","_next/static"])
     await cp(join(out,path),join(bundle,"site",path),{recursive:true});
-  for (const path of ["v2-bff.mjs","private-web.mjs"])
+  for (const path of ["v2-bff.mjs","staff-bff.mjs","private-web.mjs"])
     await cp(join(root,"server",path),join(bundle,"server",path));
   for (const path of [".dockerignore","Dockerfile","compose.web.yaml","compose.traefik.yaml"])
     await cp(join(root,"deploy/private",path),join(bundle,path));
