@@ -18,6 +18,7 @@ import {initials, outcomes} from "./work-queue";
 import {CursorNav, ReadState} from "./read-state";
 import {AttendanceComposer, conversationMessages, receiptLabel} from "./attendance";
 import {ReplySuggestion} from "./reply-suggestion";
+import {ConversationOpportunities} from "./conversation-opportunities";
 import css from "../customer-inbox.module.css";
 import first from "./inbox-onboarding.module.css";
 
@@ -87,6 +88,7 @@ function Thread({item, context, session, refresh, focus, evidence}) {
   const [scheduled,setScheduled] = useState(false);
   const [modal, setModal] = useState(null);
   const outcome = item.outcome;
+  const opportunities = session.capabilities?.opportunities === true && !session.support;
   const confirmable = session.workspace.role === "manager" && outcome?.status === "won" && !outcome.confirmedAt;
   return <article className={css.thread} aria-label={"Atendimento de " + item.title}>
     <header className={css.threadHead}><a className={css.back} href="#entrada" aria-label="Voltar à lista de conversas"><ArrowLeft size={19} /></a>
@@ -97,7 +99,7 @@ function Thread({item, context, session, refresh, focus, evidence}) {
         onClick={() => favorite.run("conversations/" + item.id + "/favorite","PUT",{favorite:!item.favorite},() => refresh())}>
         <Star size={16} fill={item.favorite ? "currentColor" : "none"} /></IconAction>
       <IconAction className={css.headTool} aria-label="Agendar retorno" onClick={() => setSchedule(true)}><CalendarClock size={16} /></IconAction>
-      <Button size="sm" onClick={() => setModal({item,confirming:false})}>Desfecho</Button></div>
+      {!opportunities && <Button size="sm" onClick={() => setModal({item,confirming:false})}>Desfecho</Button>}</div>
     </header>
     {focus}
     {favorite.error && <p role="alert">{favorite.error}</p>}
@@ -118,8 +120,9 @@ function Thread({item, context, session, refresh, focus, evidence}) {
         </div>;
       }) : <EmptyState size="compact" icon={MessageCircle} preview="inbox" title="Sem mensagens nesta leitura"
         description="Os trechos de conversa disponíveis aparecerão aqui após a análise." />}
-      <ReplySuggestion item={item} refresh={refresh} />
-      {outcome && <section className={css.brief} aria-label="Desfecho registrado"><h3>{outcomes[outcome.status]}</h3>
+      <ReplySuggestion item={item} refresh={refresh} title={opportunities ? "Sugestão da conversa" : "Sugestão da Zoe"} />
+      {opportunities && <ConversationOpportunities conversationId={item.id} context={context} />}
+      {!opportunities && outcome && <section className={css.brief} aria-label="Desfecho registrado"><h3>{outcomes[outcome.status]}</h3>
         {outcome.status === "won" && <p>{money(outcome.amountCents)} · {outcome.confirmedAt ? "Ganho confirmado" : "Aguardando confirmação do gestor"}</p>}
         {outcome.status === "lost" && <p>{outcome.lossReason}</p>}
         {confirmable && <Button size="sm" onClick={() => setModal({item,confirming:true})}>Revisar ganho</Button>}

@@ -7,6 +7,7 @@ import {resolve, join, extname} from "node:path";
 import {pathToFileURL} from "node:url";
 import {parseEnv} from "node:util";
 import {chromium} from "playwright";
+import {exerciseOpportunities} from "./integrado/opportunities-ui.mjs";
 
 const bundle = resolve(process.argv[2] || "");
 assert.ok(process.argv[2], "Informe o pacote Web compilado.");
@@ -107,7 +108,7 @@ try {
       assert.ok(eligible.length, "Worker deve ter publicado ao menos uma sugestão pronta.");
       const chosen = eligible[0];
       await page.goto(origin + "/#entrada/todos/" + chosen.id);
-      const suggestion = page.getByRole("region", {name:"Sugestão da Zoe", exact:true});
+      const suggestion = page.getByRole("region", {name:session.capabilities?.opportunities ? "Sugestão da conversa" : "Sugestão da Zoe", exact:true});
       await suggestion.getByText(chosen.analysis.reply.text, {exact:true}).waitFor();
       const source = suggestion.getByRole("link", {name:"Ver fonte 1", exact:true});
       await source.waitFor();
@@ -121,12 +122,21 @@ try {
       }
       await page.reload();
       await suggestion.getByText(chosen.analysis.reply.text, {exact:true}).waitFor();
+      let opportunities;
+      if (process.env.SA_MOTOR_OPPORTUNITIES_TEST === "1") {
+        assert.equal(session.capabilities?.opportunities, true, "O stack separado deve habilitar o ledger de pedidos.");
+        opportunities = await exerciseOpportunities({page, context:scope, conversationId:chosen.id, width});
+      }
       assert.deepEqual(errors, []);
       const result = {width, webRevision:revision, webRuntime:externalOrigin ? "packaged-private-web" : "local-bff-harness",
         api:"integrated-local", database:"postgres", providers:"internal-deterministic",
-        realLogin:true, publishedSuggestion:true, sourceOpened:true, persistedAfterReload:true, conversationId:chosen.id};
+        realLogin:true, publishedSuggestion:true, sourceOpened:true, persistedAfterReload:true, conversationId:chosen.id,
+        ...(opportunities ? {opportunities} : {})};
       results.push(result);
       console.log(JSON.stringify(result));
+    } catch (error) {
+      if (shots) await page.screenshot({path:join(shots, "motor-integrado-falha-" + width + ".png"), animations:"disabled"});
+      throw error;
     } finally {
       await context.close();
     }

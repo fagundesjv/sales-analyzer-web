@@ -18,6 +18,9 @@ const routes = [
   ["GET", "pipelines"], ["POST", "pipelines"], ["GET", "pipelines/" + uuid], ["PATCH", "pipelines/" + uuid],
   ["GET", "pipelines/" + uuid + "/stages/" + uuid + "/cards"], ["PUT", "conversations/" + uuid + "/pipeline"],
   ["GET", "diagnostics/" + uuid], ["GET", "radar"], ["GET", "conversations/" + uuid],
+  ["GET", "conversations/" + uuid + "/opportunities"], ["POST", "conversations/" + uuid + "/opportunities"],
+  ["GET", "opportunities/summary"], ["GET", "opportunities/" + uuid],
+  ["PUT", "opportunities/" + uuid + "/outcome"],
   ["GET", attendance], ["POST", attendance], ["POST", attendance + "/messages"],
   ["PUT", "conversations/" + uuid + "/favorite"], ["PUT", "conversations/" + uuid + "/outcome"],
   ["GET", "focus"], ["POST", "focus"], ["PATCH","focus/" + uuid],
@@ -37,10 +40,11 @@ const listQueries = {
 };
 const pipelineBoardPath = new RegExp("^pipelines/" + uuid + "$");
 const pipelineStagePath = new RegExp("^pipelines/" + uuid + "/stages/" + uuid + "/cards$");
+const opportunityListPath = new RegExp("^conversations/" + uuid + "/opportunities$");
 function queryFor(path, method, raw) {
   if (!raw) return "";
   const pipelineBoard = pipelineBoardPath.test(path), pipelineStage = pipelineStagePath.test(path);
-  const filters = pipelineBoard ? ["limit","assigneeId"] : pipelineStage ? ["limit","assigneeId","cursor"] : listQueries[path];
+  const filters = opportunityListPath.test(path) ? ["limit","cursor"] : pipelineBoard ? ["limit","assigneeId"] : pipelineStage ? ["limit","assigneeId","cursor"] : listQueries[path];
   if (raw.length > 1200 || method !== "GET" || !Array.isArray(filters))
     throw fail(400, "Consulta indisponível.");
   const params = new URLSearchParams(raw);

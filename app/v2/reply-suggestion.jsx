@@ -9,7 +9,7 @@ const waiting = {
   unavailable: "A sugestão desta leitura ainda não está disponível.",
 };
 
-export function ReplySuggestion({item, refresh}) {
+export function ReplySuggestion({item, refresh, title = "Sugestão da Zoe"}) {
   const reply = item.analysis?.reply;
   if (!reply) return null;
 
@@ -20,8 +20,8 @@ export function ReplySuggestion({item, refresh}) {
   const sources = ids.filter(id => evidence.some(message => message.externalId === id));
   const missing = sources.length < ids.length;
 
-  return <section className={css.brief} aria-label="Sugestão da Zoe">
-    <h3>{stale ? "Sugestão desatualizada" : "Sugestão da Zoe"}</h3>
+  return <section className={css.brief} aria-label={title}>
+    <h3>{stale ? "Sugestão desatualizada" : title}</h3>
     {ready ? <>
       <blockquote>{reply.text}</blockquote>
       {sources.length > 0 && <nav aria-label="Fontes da sugestão">
