@@ -27,11 +27,14 @@ import {CentralAi} from "./central-ai";
 import {CommercialSettings} from "./commercial-settings";
 import {ReadingSettings} from "./reading-settings";
 import {MemoryContext} from "./memory-context";
+import {CommercialInbox} from "./commercial-inbox";
+import {CommercialReport} from "./commercial-report";
+import {CommercialSales} from "./commercial-sales";
 
 const titles = Object.fromEntries(settingsSections.map(x => [x.id, x.title]));
 Object.assign(titles, {dashboard:"Dashboard", radar:"Radar", oportunidades:"Negociações",
   entrada:"Conversas", conversa:"Conversa", tarefas:"Retornos", chat:"Chat da Zoe", zoe:"Chat da Zoe",
-  resultados:"Ganhos", diagnosticos:"Diagnósticos", crm:"Pipeline comercial", alertas:"Alertas"});
+  resultados:"Ganhos", diagnosticos:"Diagnósticos", crm:"Pipeline comercial", alertas:"Alertas","raio-x":"Raio-X comercial",tv:"TV da operação"});
 const jump = where => { window.location.hash = where; };
 const uuid = /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i;
 const sessionEvent = "sa2-session-changed";
@@ -105,7 +108,8 @@ function ConnectedTeam({session,context}) {
 function Workspace({session, onSession, route, dark, changeTheme}) {
   const context = session.user.id + "/" + session.workspace.id;
   const logout = useV2Action(context);
-  const [page, detail, threadId, section, evidence] = route.split("/");
+  const routePath=route.split("?")[0];
+  const [page, detail, threadId, section, evidence] = routePath.split("/");
   const [revision, setRevision] = useState(0);
   const title = titles[page] || "Área da empresa";
   const isInbox = page === "entrada" || page === "conversa";
@@ -119,13 +123,16 @@ function Workspace({session, onSession, route, dark, changeTheme}) {
   const refresh = () => setRevision(x => x + 1);
   const signOut = () => logout.run("auth/session", "DELETE", undefined, () => {announceSessionChange(); onSession(null);});
   let content;
-  if (page === "dashboard" || page === "resultados")
+  if(session.capabilities?.commercialViews===true&&["dashboard","resultados","raio-x","tv"].includes(page))
+    content=page==="resultados"?<CommercialSales route={route} context={context} session={session} />:<CommercialReport route={route} context={context} session={session} tv={page==="tv"} dashboard={page==="dashboard"} />;
+  else if (page === "dashboard" || page === "resultados")
     content = <ConnectedDashboard radar={radar} context={context} session={session} gains={page === "resultados"} />;
   else if (isRadar) content = <ConnectedRadar key={page} context={context} session={session} title={title} />;
   else if (isChat) content = <ConnectedZoe route={route} session={session} context={context} history={chatHistory} />;
-  else if (isInbox) content = <ConnectedInbox revision={revision} id={detailId}
+  else if (isInbox) {const Inbox=session.capabilities?.commercialViews===true?CommercialInbox:ConnectedInbox;content = <Inbox route={route} revision={revision} id={detailId}
     validId={uuid.test(detailId || "")} context={context} session={session} refresh={refresh}
-    evidence={section === "evidencia" ? evidence : undefined} />;
+    initialOpportunityId={page==="conversa"&&threadId==="pedido"&&uuid.test(section||"")?section:undefined}
+    evidence={section === "evidencia" ? evidence : undefined} />;}
   else if (page === "tarefas") content = <ConnectedReturns context={context} />;
   else if (page === "diagnosticos") content = <Diagnostics manager={session.workspace.role === "manager"} key={detail || page} initialId={uuid.test(detail || "") ? detail : null} context={context} connections={connections} />;
   else if (page === "conexao" || page === "whatsapps") content = <ConnectedChannels key={page} catalog={page === "conexao"}
@@ -140,7 +147,7 @@ function Workspace({session, onSession, route, dark, changeTheme}) {
   else if (page === "plano") content = <ConnectedCredits session={session} context={context} />;
   else content = <DetailPage title={title}><DetailText>Esta área ainda não está disponível.</DetailText>
     <a href="#radar">Abrir Radar</a></DetailPage>;
-  return <SalesFrame route={route} area={area} title={title} live={{session, logout:signOut}} threads={{}}
+  return <SalesFrame route={routePath} area={area} title={title} live={{session, logout:signOut}} threads={{}}
     chatHistory={isChat && <ZoeHistory history={chatHistory} route={route} />}
     dark={dark} changeTheme={changeTheme} ask={() => jump("chat")}>
     <title>{title + " · Sales Analyzer"}</title>

@@ -1,5 +1,5 @@
 "use client";
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import {Button, Checkbox, Input, Select} from "@content-ventures/design-system/v3";
 import {DetailRows} from "../../src/ui/os/detail";
 import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
@@ -81,17 +81,19 @@ function OpportunitySummary({context, revision}) {
   </section>;
 }
 
-export function ConversationOpportunities({conversationId, context, commercialEngine = false, conversation, session}) {
+export function ConversationOpportunities({conversationId, context, commercialEngine = false, conversation, session,initialOpportunityId}) {
   const path = "conversations/" + conversationId + "/opportunities";
   const [revision, setRevision] = useState(0);
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedId, setSelectedId] = useState(initialOpportunityId||null);
+  useEffect(()=>setSelectedId(initialOpportunityId||null),[initialOpportunityId,conversationId]);
   const [modal, setModal] = useState(null);
   const list = useV2Page(path, context, revision);
   const currentId = selectedId || list.data?.items[0]?.id;
   const detail = useV2Read(currentId ? "opportunities/" + currentId : null, context, revision);
+  const selected=detail.data&&detail.data.conversationId!==conversationId?{...detail,data:undefined,error:{status:404,message:"Este pedido não pertence a esta conversa."}}:detail;
   const items = list.data?.items || [];
   const options = [...items];
-  if (detail.data && !items.some(item => item.id === detail.data.id)) options.unshift(detail.data);
+  if (selected.data && !items.some(item => item.id === selected.data.id)) options.unshift(selected.data);
   const select = id => {setSelectedId(id); setModal(null);};
   const refresh = () => {setModal(null); setRevision(value => value + 1);};
   const saved = item => {setSelectedId(item.id); refresh();};
@@ -106,7 +108,7 @@ export function ConversationOpportunities({conversationId, context, commercialEn
           + (item.legacy ? " · Legado" : "")}))} /> : <p>Nenhum pedido nesta página.</p>}
       <CursorNav page={list} label="Páginas de pedidos" />
     </>}</ReadState>
-    {currentId && <ReadState read={detail}>{item => <section aria-label="Pedido selecionado">
+    {currentId && <ReadState read={selected}>{item => <section aria-label="Pedido selecionado">
       <DetailRows items={[
         {label:"Pedido", value:item.title},
         {label:"Situação", value:statuses[item.status] || item.status},

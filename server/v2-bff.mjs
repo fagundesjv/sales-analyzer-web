@@ -26,6 +26,7 @@ const routes = [
   ["POST", "opportunities/" + uuid + "/(?:resolve|followups)"],
   ["POST", "commercial/actions/" + uuid + "/reconcile"],
   ["GET", "commercial/settings"], ["PUT", "commercial/settings"],
+  ["GET", "commercial/inbox"], ["GET", "commercial/sales"], ["GET", "commercial/report"],
   ["GET", "automation/policies"], ["GET", "automation/policies/" + uuid], ["PUT", "automation/policies/" + uuid],
   ["GET", "reading-settings"], ["PUT", "reading-settings"],
   ["GET", "memory/search"], ["GET", "memory/sources/"+uuid],
@@ -52,6 +53,9 @@ const listQueries = {
   "zoe/history":["limit","cursor"], "zoe/chat/history":["limit","cursor"], "budget/usage":["period"], team:["limit","cursor"],
   "catalog/items":["limit","cursor","q","kind","status"], pipelines:["limit","cursor"], alerts:["limit","cursor","kind","read"],
   "memory/search":["q","scope","conversationId","opportunityId","limit"],
+  "commercial/inbox":["filter","windowDays","connectionId","ownerId","q","favorite","order","signal","limit","cursor"],
+  "commercial/sales":["windowDays","connectionId","ownerId","q","limit","cursor"],
+  "commercial/report":["windowDays","connectionId","ownerId","q"],
 };
 const pipelineBoardPath = new RegExp("^pipelines/" + uuid + "$");
 const pipelineStagePath = new RegExp("^pipelines/" + uuid + "/stages/" + uuid + "/cards$");
@@ -61,7 +65,8 @@ function queryFor(path, method, raw) {
   const pipelineBoard = pipelineBoardPath.test(path), pipelineStage = pipelineStagePath.test(path);
   const filters = opportunityListPath.test(path) ? ["limit","cursor"] : pipelineBoard ? ["limit","assigneeId"] : pipelineStage ? ["limit","assigneeId","cursor"] : listQueries[path];
   const memory = path === "memory/search";
-  if (raw.length > (memory ? 8000 : 1200) || method !== "GET" || !Array.isArray(filters))
+  const commercial=["commercial/inbox","commercial/sales","commercial/report"].includes(path);
+  if (raw.length > (memory ? 8000 : commercial?4000:1200) || method !== "GET" || !Array.isArray(filters))
     throw fail(400, "Consulta indisponível.");
   const params = new URLSearchParams(raw);
   for (const [name,value] of params) {
@@ -77,7 +82,13 @@ function queryFor(path, method, raw) {
         (name === "throughDate" && !/^\d{4}-\d{2}-\d{2}$/.test(value)) ||
         (name === "period" && !/^[1-9]\d{3}-(0[1-9]|1[0-2])$/.test(value)) ||
         (["connectionId","conversationId","opportunityId","assigneeId"].includes(name) && !uuidValue.test(value)) ||
-        (name === "cursor" && !(["diagnostics","returns","alerts"].includes(path) ? /^[A-Za-z0-9_-]{1,160}$/.test(value) : uuidValue.test(value))))
+        (name === "ownerId" && !uuidValue.test(value)) ||
+        (name === "windowDays" && (!/^\d{1,2}$/.test(value)||Number(value)<1||Number(value)>90)) ||
+        (name === "filter" && !["em_risco","todas","esperando","quentes","mornos","frios","vendas","quentes_esperando","esperando_30","hoje","novos_hoje","vendas_hoje","sem_temperatura","resolvidos","pagos","perdidos","follow_up","anexos_cliente","atividade_24h","atividade_48h","pdf_cliente","imagem_cliente"].includes(value)) ||
+        (name === "order" && !["recentes","urgencia","valor_em_risco","valor_venda"].includes(value)) ||
+        (name === "signal" && !["sem_resposta","encaminhamento_sem_retorno","resposta_rasa","abertura_impessoal","compra_sem_triagem","pagamento_presencial_pendente","sem_retomada","demora","sem_proximo_passo","sem_sondagem"].includes(value)) ||
+        (name === "limit" && commercial && Number(value)>60) ||
+        (name === "cursor" && !(commercial?value.length>0&&value.length<=2048&&!/[\x00-\x20\x7f]/.test(value):["diagnostics","returns","alerts"].includes(path) ? /^[A-Za-z0-9_-]{1,160}$/.test(value) : uuidValue.test(value))))
       throw fail(400, "Filtro ou paginação inválida.");
   }
   return "?" + params.toString();

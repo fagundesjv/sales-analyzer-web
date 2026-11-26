@@ -66,7 +66,7 @@ function OutcomeDialog({item, context, confirming, close, saved, reload}) {
       </form>}
   </ResponsiveDialog>;
 }
-function Thread({item, context, session, refresh, focus, evidence}) {
+function Thread({item, context, session, refresh, focus, evidence,initialOpportunityId,backHref="#entrada"}) {
   const cited = useRef(null);
   const log = useRef(null);
   const path = "conversations/"+item.id+"/attendance";
@@ -92,7 +92,7 @@ function Thread({item, context, session, refresh, focus, evidence}) {
   const commercialEngine = opportunities && session.capabilities?.commercialEngine === true;
   const confirmable = session.workspace.role === "manager" && outcome?.status === "won" && !outcome.confirmedAt;
   return <article className={css.thread} aria-label={"Atendimento de " + item.title}>
-    <header className={css.threadHead}><a className={css.back} href="#entrada" aria-label="Voltar à lista de conversas"><ArrowLeft size={19} /></a>
+    <header className={css.threadHead}><a className={css.back} href={backHref} aria-label="Voltar à lista de conversas"><ArrowLeft size={19} /></a>
       <span className={css.headerMark}><ContactMark s={{tone:"sage",initials:initials(item.title)}} /></span>
       <div className={css.identity}><div className={css.identityLine}><h2>{item.title}</h2></div><small>{item.source === "synthetic" ? "Conversa de exemplo" : item.source === "nowz" ? "Nowz" : "WhatsApp"}</small></div>
       <div className={css.threadUtilities}><IconAction className={css.headTool} disabled={favorite.pending}
@@ -122,7 +122,7 @@ function Thread({item, context, session, refresh, focus, evidence}) {
       }) : <EmptyState size="compact" icon={MessageCircle} preview="inbox" title="Sem mensagens nesta leitura"
         description="Os trechos de conversa disponíveis aparecerão aqui após a análise." />}
       {!commercialEngine && <ReplySuggestion item={item} refresh={refresh} context={context} title={opportunities ? "Sugestão da conversa" : "Sugestão da Zoe"} />}
-      {opportunities && <ConversationOpportunities conversationId={item.id} context={context} commercialEngine={commercialEngine} conversation={item} session={session} />}
+      {opportunities && <ConversationOpportunities conversationId={item.id} context={context} commercialEngine={commercialEngine} conversation={item} session={session} initialOpportunityId={initialOpportunityId} />}
       {!opportunities && outcome && <section className={css.brief} aria-label="Desfecho registrado"><h3>{outcomes[outcome.status]}</h3>
         {outcome.status === "won" && <p>{money(outcome.amountCents)} · {outcome.confirmedAt ? "Ganho confirmado" : "Aguardando confirmação do gestor"}</p>}
         {outcome.status === "lost" && <p>{outcome.lossReason}</p>}
@@ -140,7 +140,7 @@ function Thread({item, context, session, refresh, focus, evidence}) {
       saved={value => {setModal(null);refresh(value);}} />}
   </article>;
 }
-export function ConnectedInbox({revision: listRevision, id, validId, context, session, refresh, evidence}) {
+export function ConnectedInbox({revision: listRevision, id, validId, context, session, refresh, evidence,commercialView,initialOpportunityId}) {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [filter,setFilter] = useState("all");
@@ -155,17 +155,18 @@ export function ConnectedInbox({revision: listRevision, id, validId, context, se
     const timer = setTimeout(() => setQuery(search.trim()), 230);
     return () => clearTimeout(timer);
   }, [search]);
-  const inbox = useV2Page("conversations?q=" + encodeURIComponent(query) + (filter === "fav" ? "&favorite=true" : ""), context, listRevision);
+  const inbox = useV2Page(commercialView?.path||"conversations?q=" + encodeURIComponent(query) + (filter === "fav" ? "&favorite=true" : ""), context, listRevision);
   const [revision, setRevision] = useState(0);
   const [celebrate, setCelebrate] = useState(null);
   const detail = useV2Read(validId ? "conversations/" + id : null, context, revision);
-  const pendingSearch = search.trim() !== query;
-  const firstAccess = !id && !search.trim() && !query && filter === "all" &&
+  const pendingSearch = commercialView?commercialView.pending:search.trim() !== query;
+  const filtered=commercialView?commercialView.filtered:!!query||filter!=="all";
+  const firstAccess = !commercialView && !id && !search.trim() && !query && filter === "all" &&
     inbox.data?.items.length === 0 && !inbox.previous && !inbox.next;
   const connections = useV2Read(firstAccess ? "connections?limit=100" : null,context,listRevision);
   const focus = useV2Read(!firstAccess && (validId || inbox.confirmed) ? "focus" : null,context);
   const focusAction = useV2Action(context);
-  const open = target => {location.hash = inboxHref(target);};
+  const open = target => {location.hash = commercialView?commercialView.href(target):inboxHref(target);};
   const bar = <FocusBar read={focus} action={focusAction} currentId={validId ? id : null}
     candidate={detail.data?.id || (!pendingSearch && inbox.data?.items[0]?.id)} onOpen={open} />;
   const mobileThread = mobile && !!id;
@@ -174,10 +175,10 @@ export function ConnectedInbox({revision: listRevision, id, validId, context, se
     <InboxOnboarding session={session} lines={data.items} />}</ReadState>;
   return <div className={css.inbox} data-thread={!!id}>
     <section className={css.list} aria-label="Lista de atendimentos"><div className={css.listHead}>{!mobileThread && bar}
-      <SearchField label="Buscar conversas" value={search} maxLength={80} onValueChange={setSearch} placeholder="Buscar conversas…" /><Pills size="sm" label="Filtro da caixa" value={filter} onChange={setFilter}
-        items={[{value:"all",label:"Todas"},{value:"fav",label:"Favoritas"}]} /></div>
+      {commercialView?commercialView.tools(inbox):<><SearchField label="Buscar conversas" value={search} maxLength={80} onValueChange={setSearch} placeholder="Buscar conversas…" /><Pills size="sm" label="Filtro da caixa" value={filter} onChange={setFilter}
+        items={[{value:"all",label:"Todas"},{value:"fav",label:"Favoritas"}]} /></>}</div>
       <div className={css.rows}><ReadState retain pending={pendingSearch} read={inbox}>{({items:matches}) => {
-        return matches.length ? matches.map(item => <a className={css.row} href={inboxHref(item.id)}
+        return matches.length ? matches.map(item => <a className={css.row} href={commercialView?commercialView.href(item.id):inboxHref(item.id)}
           key={item.id} aria-current={id === item.id || undefined} onClick={e => {
             const round = focus.data?.round;
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || round?.status !== "running" || round.conversationId === item.id) return;
@@ -186,15 +187,15 @@ export function ConnectedInbox({revision: listRevision, id, validId, context, se
           }}><span className={css.rowMark}>
             <ContactMark s={{tone:"sage",initials:initials(item.title)}} /></span><span className={css.rowText}>
             <span className={css.rowTitle}><strong>{item.title}</strong>{item.favorite && <Star size={11} aria-label="Favorita" fill="currentColor" />}</span><small>{item.summary}</small></span></a>) :
-          <EmptyState size="compact" icon={query || filter !== "all" ? SearchX : MessageCircle}
-            title={query || filter !== "all" ? "Nenhuma conversa encontrada" : inbox.previous ? "Esta página está vazia" :
+          <EmptyState size="compact" icon={filtered ? SearchX : MessageCircle}
+            title={filtered ? "Nenhuma conversa encontrada" : inbox.previous ? "Esta página está vazia" :
               "As conversas aparecerão aqui"}
-            description={query || filter !== "all" ? "Tente outro nome ou mostre todas as conversas." :
+            description={filtered ? "Tente outro nome ou mostre todas as conversas." :
               inbox.previous ? "Volte para a página anterior." : session.workspace.role === "manager" ?
               "Conecte um WhatsApp e analise as mensagens para começar." :
               "Peça ao gestor para atribuir uma linha à sua conta."}
-            action={query || filter !== "all" ? <Button size="sm" variant="secondary"
-              onClick={() => {setSearch("");setQuery("");setFilter("all");}}>Mostrar todas</Button> :
+            action={filtered ? <Button size="sm" variant="secondary"
+              onClick={() => {if(commercialView)commercialView.clear();else{setSearch("");setQuery("");setFilter("all");}}}>Mostrar todas</Button> :
               inbox.previous ? <Button size="sm" variant="secondary" onClick={inbox.previous}>Página anterior</Button> :
               <ButtonLink href="#whatsapps" size="sm" variant="secondary">Ver WhatsApps</ButtonLink>} />;
       }}</ReadState><CursorNav page={inbox} pending={pendingSearch} label="Páginas da caixa de entrada" /></div>
@@ -207,7 +208,7 @@ export function ConnectedInbox({revision: listRevision, id, validId, context, se
       !validId ? <p>Conversa inválida. <a href="#entrada">Voltar à lista</a></p> :
       <ReadState read={detail} notFound={<EmptyState size="compact" icon={MessageCircle} title="Conversa indisponível"
         description="Consulte as conversas disponíveis para sua conta."
-        action={<ButtonLink href="#entrada" size="sm">Voltar às conversas</ButtonLink>} />}>{item => <Thread key={item.id} evidence={evidence} focus={mobileThread ? bar : null} item={item} context={context} session={session} refresh={value => {
+        action={<ButtonLink href="#entrada" size="sm">Voltar às conversas</ButtonLink>} />}>{item => <Thread key={item.id} evidence={evidence} initialOpportunityId={initialOpportunityId} backHref={commercialView?.href()} focus={mobileThread ? bar : null} item={item} context={context} session={session} refresh={value => {
         setRevision(n => n + 1); refresh();
         if (value && !value.confirmedAt && ["won","resolved"].includes(value.status))
           setCelebrate({status:value.status,at:value.recordedAt});
