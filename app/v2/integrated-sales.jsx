@@ -111,7 +111,7 @@ function Workspace({session, onSession, route, dark, changeTheme}) {
   const isInbox = page === "entrada" || page === "conversa";
   const isRadar = page === "radar" || page === "oportunidades";
   const isChat = page === "chat" || page === "zoe";
-  const chatHistory = useV2Page(isChat ? "zoe/history" : null,context);
+  const chatHistory = useV2Page(isChat ? (session.capabilities?.zoeChat===true?"zoe/chat/history":"zoe/history") : null,context);
   const area = isInbox ? "entrada" : isRadar ? "radar" : page === "zoe" ? "chat" : page;
   const radar = useV2Page(page === "dashboard" ? "radar" : null, context, revision);
   const connections = useV2Page(["whatsapps","diagnosticos"].includes(page) ? "connections" : null, context);

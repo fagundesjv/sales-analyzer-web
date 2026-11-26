@@ -39,6 +39,9 @@ const routes = [
   ["PUT", "conversations/" + uuid + "/outcome/confirmation"],
   ["GET", "zoe/session"], ["GET", "zoe/history"], ["POST", "zoe/queries"],
   ["GET", "zoe/turns/" + uuid + "/citations/[0-9]"],
+  ["GET", "zoe/chat"], ["GET", "zoe/chat/history"], ["POST", "zoe/turns"],
+  ["GET", "zoe/chat/runs/"+uuid], ["GET", "zoe/chat/turns/"+uuid], ["GET", "zoe/chat/turns/"+uuid+"/sources/[0-9]+"],
+  ["POST", "zoe/actions"], ["POST", "zoe/actions/"+uuid+"/confirm"], ["POST", "zoe/attachments"],
 ].map(([method, pattern]) => ({method, matches: new RegExp("^" + pattern + "$")}));
 const uuidValue = new RegExp("^" + uuid + "$");
 const contextValue = new RegExp("^" + uuid + "/" + uuid + "$");
@@ -46,7 +49,7 @@ const listQueries = {
   summary:["connectionId"], connections:["limit","cursor"], radar:["limit","cursor","q","outcome"],
   conversations:["limit","cursor","connectionId","q","outcome","favorite"], diagnostics:["limit","cursor","connectionId"],
   returns:["limit","cursor","status","conversationId","throughDate"],
-  "zoe/history":["limit","cursor"], "budget/usage":["period"], team:["limit","cursor"],
+  "zoe/history":["limit","cursor"], "zoe/chat/history":["limit","cursor"], "budget/usage":["period"], team:["limit","cursor"],
   "catalog/items":["limit","cursor","q","kind","status"], pipelines:["limit","cursor"], alerts:["limit","cursor","kind","read"],
   "memory/search":["q","scope","conversationId","opportunityId","limit"],
 };
@@ -64,7 +67,7 @@ function queryFor(path, method, raw) {
   for (const [name,value] of params) {
     if (!filters.includes(name) || params.getAll(name).length !== 1 ||
         (name === "q" && (value.length > (memory ? 2000 : 80) || value.includes("\0"))) ||
-        (name === "limit" && (!/^(?:[1-9][0-9]?|100)$/.test(value) || ((memory || path === "zoe/history" || path === "alerts" || pipelineBoard || pipelineStage) && Number(value) > 50))) ||
+        (name === "limit" && (!/^(?:[1-9][0-9]?|100)$/.test(value) || ((memory || path === "zoe/history" || path === "zoe/chat/history" || path === "alerts" || pipelineBoard || pipelineStage) && Number(value) > 50))) ||
         (name === "scope" && !["company","line","customer","opportunity","private"].includes(value)) ||
         (name === "outcome" && !["won","lost","resolved","open"].includes(value)) ||
         (name === "favorite" && !["true","false"].includes(value)) ||
@@ -152,7 +155,7 @@ export function createV2Bff({apiOrigin, webOrigin, serviceKey, adminKey, network
         if (!key || !/^[A-Za-z0-9._:-]{1,128}$/.test(key)) throw fail(400, "Identificador da operação inválido.");
         headers["Idempotency-Key"] = key;
       }
-      const body = await bodyOf(req, path === "memory/materials" ? 8*1024*1024 : memoryDocument ? 1024*1024 : req.method === "POST" && attendanceSend.test(path) ? 32 * 1024 : 8192, memoryDelete);
+      const body = await bodyOf(req, path === "zoe/attachments"?17*1024*1024:path === "memory/materials" ? 8*1024*1024 : memoryDocument ? 1024*1024 : req.method === "POST" && attendanceSend.test(path) ? 32 * 1024 : 8192, memoryDelete);
       if (body !== undefined) headers["Content-Type"] = "application/json";
       const upstream = (endpoint, options) => fetch(api.origin + "/v1/" + endpoint, {
         headers, redirect: "error", signal: AbortSignal.timeout(upstreamDeadlines.get(path) ?? 9000), ...options,
