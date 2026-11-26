@@ -1,4 +1,5 @@
 // Browser routes deliberately mirror only the operations consumed by the official Web UI.
+import {createStaffBff} from "./staff-bff.mjs";
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const attendance = "conversations/" + uuid + "/attendance";
 const attendanceStart = new RegExp("^" + attendance + "$");
@@ -90,7 +91,7 @@ async function bodyOf(req, limit) {
   catch { throw fail(400, "Confira os dados do formulário."); }
 }
 
-export function createV2Bff({apiOrigin, webOrigin, serviceKey, network = "loopback"}) {
+export function createV2Bff({apiOrigin, webOrigin, serviceKey, adminKey, network = "loopback"}) {
   const api = new URL(apiOrigin);
   const browserOrigin = new URL(webOrigin);
   const cookieScope = "; HttpOnly; SameSite=Strict; Path=/api/v2" +
@@ -99,7 +100,9 @@ export function createV2Bff({apiOrigin, webOrigin, serviceKey, network = "loopba
     network === "loopback" && api.protocol === "http:" && api.hostname === "127.0.0.1" && api.origin === apiOrigin;
   if (!allowed || !serviceKey || serviceKey.length < 32)
     throw new Error("Configure a origem privada e a chave de serviço da API V2.");
+  const staff = createStaffBff({apiOrigin,webOrigin,serviceKey,adminKey});
   return async function handle(req, res) {
+    if (req.url.startsWith("/api/v2/staff/")) return staff(req,res);
     res.setHeader("Cache-Control", "private, no-store");
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     res.setHeader("X-Content-Type-Options", "nosniff");

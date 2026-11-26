@@ -23,6 +23,7 @@ import {ConnectedPipeline} from "./pipeline";
 import {ConnectedAlerts} from "./alerts";
 import {ConnectedCredits} from "./credits";
 import {PasswordRecovery} from "./password-recovery";
+import {CentralAi} from "./central-ai";
 
 const titles = Object.fromEntries(settingsSections.map(x => [x.id, x.title]));
 Object.assign(titles, {dashboard:"Dashboard", radar:"Radar", oportunidades:"Negociações",
@@ -166,7 +167,7 @@ export function IntegratedSales() {
   }, [initial.data, initial.error, session]);
   return <ThemeV3 className={skin.brand} mode={dark ? "dark" : "light"}>
     <ThemeV3 className={skin.mono + " sales-surface"}>
-      {route === "convite" && session !== undefined ? <AcceptInvitation session={session} key={session?.user.id || "guest"}
+      {route === "central-ia" ? <CentralAi /> : route === "convite" && session !== undefined ? <AcceptInvitation session={session} key={session?.user.id || "guest"}
         onSwitch={value => {announceSessionChange();setSession(value);jump("dashboard");}}
         showCompanies={() => {setSession(undefined);setEpoch(v => v + 1);jump("empresa");}} /> :
         session ? <Workspace key={[session.user.id,session.workspace.id,session.workspace.role].join("/")} session={session} onSession={setSession}

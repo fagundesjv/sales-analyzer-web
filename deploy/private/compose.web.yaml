@@ -15,6 +15,7 @@ services:
       SA_WEB_ORIGIN: ${SA_WEB_ORIGIN:-}
       SA_API_URL: ${SA_API_URL:?Informe a URL privada da API V2}
       SA_SERVICE_KEY: ${SA_SERVICE_KEY:?Informe a chave exclusiva do BFF V2}
+      SA_ADMIN_KEY: ${SA_ADMIN_KEY:-}
     ports:
       - "127.0.0.1:${SA_WEB_BIND_PORT:-${SA_WEB_PUBLIC_PORT:-4319}}:4319"
     networks: [bff]
