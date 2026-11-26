@@ -74,7 +74,7 @@ async function scenario(width){
     if(evidence)await page.screenshot({path:evidence+`/sales-${width}.png`,fullPage:true});
     await page.getByRole("link",{name:talk.title+" · "+opB.title,exact:true}).click();await page.getByRole("region",{name:"Pedido selecionado",exact:true}).getByText("Pedido B",{exact:true}).first().waitFor();assert.ok(page.url().includes(opB.id));
     await page.goto(fixture.origin+"/#conversa/"+conversationId+"/pedido/"+foreign.id);await page.getByText("Este pedido não pertence a esta conversa.",{exact:true}).waitFor();assert.equal(foreignActions,0);
-    await page.goto(fixture.origin+"/#raio-x?windowDays=41&connectionId="+line.id+"&ownerId="+seller.id);await page.getByRole("article",{name:"Raio-X comercial autorizado",exact:true}).waitFor();
+    await page.goto(fixture.origin+"/#raio-x?windowDays=41&connectionId="+line.id+"&ownerId="+seller.id);await page.getByRole("article",{name:"Raio-X comercial autorizado",exact:true}).waitFor();await page.getByRole("article",{name:"Raio-X comercial autorizado",exact:true}).getByText("1 exibida de 3 no conjunto autorizado",{exact:true}).waitFor();
     const signal=page.waitForResponse(r=>new URL(r.url()).searchParams.get("signal")===commercialSignals[0].id);await page.getByRole("link",{name:commercialSignals[0].name,exact:true}).click();await signal;assert.ok(page.url().includes("windowDays=41"));
     await page.goto(fixture.origin+"/#raio-x?windowDays=41&connectionId="+line.id+"&ownerId="+seller.id);await page.getByRole("button",{name:"Imprimir ou salvar PDF",exact:true}).waitFor();
     if(evidence){await page.screenshot({path:evidence+`/report-${width}.png`,fullPage:true});if(width===1440){

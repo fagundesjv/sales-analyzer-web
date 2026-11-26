@@ -43,7 +43,7 @@ export function CommercialReportBody({data,params,company,tv=false}){
         {key:"amount",header:"Valor conhecido",numeric:true,render:r=>exactReais(r.amountCents)},
       ]} /></div>
     </DetailSection>}
-    {!tv&&<DetailSection title="Prioridades para atendimento" meta={Number.isInteger(data.priority?.total)?`${data.priority.total} no conjunto autorizado`:"Conjunto autorizado"}>
+    {!tv&&<DetailSection title="Prioridades para atendimento" meta={Number.isInteger(data.priority?.total)?`${data.priority.items?.length||0} ${data.priority.items?.length===1?"exibida":"exibidas"} de ${data.priority.total} no conjunto autorizado`:"Conjunto autorizado"}>
       {data.priority?.items?.length?<div className={css.table}><DataTable label="Prioridades do relatório" rows={data.priority.items} rowKey={r=>r.opportunityId||r.id} density="compact" columns={[
         {key:"contact",header:"Conversa",pinned:true,render:r=><ButtonLink variant="ghost" size="sm" href={orderHref(r.id,r.opportunityId,params)}>{r.title}</ButtonLink>},
         {key:"summary",header:"O que tratar",render:r=>r.summary},
