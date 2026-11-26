@@ -1,0 +1,47 @@
+name: Verify packaged Web
+on:
+  pull_request:
+  push:
+    branches: [main, 'codex/**']
+permissions:
+  contents: read
+concurrency:
+  group: web-verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm install --global pnpm@10.33.0 --ignore-scripts --no-audit --no-fund
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: BFF boundaries and commercial contracts
+        run: node --test tests/v2-private-origin.mjs tests/v2-opportunities-bff.mjs tests/v2-suggestion-bff.mjs
+      - name: Build the integrated production package
+        env:
+          NEXT_PUBLIC_SALES_ACCESS_MODE: public
+          NEXT_PUBLIC_SALES_WHATSAPP_SELF_SERVE: enabled
+        run: pnpm package:privado
+      - run: pnpm exec playwright install --with-deps chrome
+      - name: Verify desktop and mobile compiled flows
+        run: |
+          PACKAGE_DIR=$(find .artifacts -maxdepth 1 -type d -name 'sales-v2-web-*' -print -quit)
+          test -n "$PACKAGE_DIR"
+          node tests/v2-opportunities.mjs "$PACKAGE_DIR"
+          node tests/v2-suggestion.mjs "$PACKAGE_DIR"
+          node tests/v2-loading-states.mjs "$PACKAGE_DIR"
+          sha256sum .artifacts/*.tar.gz > .artifacts/SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: web-${{ github.sha }}
+          path: |
+            .artifacts/*.tar.gz
+            .artifacts/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
