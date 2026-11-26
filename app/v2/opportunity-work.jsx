@@ -55,7 +55,7 @@ export function OpportunityWork({item,conversation,context,revision}) {
       const stale=r.stale===true||conversation.pendingRevision===true;
       const step=r.step, text=r.draftText?.trim(), writes=step?.writes===true;
       const ready=!closed&&!stale&&r.state==="pending"&&(writes?r.draftState==="ready"&&Boolean(text):step?.writes===false);
-      const same=r.revision&&actions.data?.items.some(a=>a.revision===r.revision&&a.kind===(writes?"send":"internal")&&["queued","dispatching","accepted","uncertain","resolved"].includes(a.state));
+      const same=r.revision&&actions.data?.items.some(a=>a.revision===r.revision&&a.kind===(writes?"send":"internal"));
       const memoryIds=new Set(memoryReferences(r.memorySources).map(source=>source.reference));
       const ids=[...new Set(r.evidenceIds||[])].filter(id=>!memoryIds.has(id));
       const sources=ids.filter(id=>conversation.evidence?.some(m=>m.externalId===id));

@@ -133,6 +133,7 @@ function Thread({item, context, session, refresh, focus, evidence}) {
       onClick={attendance.retry}>Atualizar atendimento</Button></div> : info && <AttendanceComposer
       key={JSON.stringify([info.available,info.mode,info.contactName,info.lineName,info.destination])}
       path={path} context={context} info={info} refreshing={attendance.refreshing} reload={attendance.retry}
+      channelLabel={item.source === "nowz" ? "Nowz" : "WhatsApp"}
       received={msg => setPosted(previous => [...previous.filter(old => old.id !== msg.id),msg])} />}
     {modal && <OutcomeDialog item={modal.item} confirming={modal.confirming} context={context}
       close={() => setModal(null)} reload={() => {setModal(null);refresh();}}

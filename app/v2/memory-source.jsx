@@ -40,6 +40,7 @@ function ImportMaterial({source,context,changed}) {
   const job=useV2Read(jobId?"memory/materials/"+jobId:null,context);
   const retry=useRef(job.retry);retry.current=job.retry;
   const pending=job.data&&["pending","running"].includes(job.data.state);
+  const sourcePending=["pending","running"].includes(source.metadata?.etlState);
   useEffect(()=>{if(!pending)return;const timer=setInterval(()=>retry.current(),3000);return()=>clearInterval(timer);},[pending]);
   async function enqueue(event){
     event.preventDefault();setError("");const form=new FormData(event.currentTarget);let data;
@@ -61,7 +62,7 @@ function ImportMaterial({source,context,changed}) {
       <Checkbox label="Material essencial para a próxima leitura" checked={critical} onChange={event=>setCritical(event.target.checked)} />
       <DetailText>Até 5 MB. O conteúdo será conferido e ficará associado somente a esta fonte.</DetailText>
       {(error||action.error)&&<p role="alert">{error||action.error}</p>}
-      <Button type="submit" disabled={loading||action.pending||Boolean(jobId)}>{loading?"Lendo arquivo…":action.pending?"Registrando…":"Importar material"}</Button>
+      <Button type="submit" disabled={loading||action.pending||Boolean(jobId)||sourcePending}>{loading?"Lendo arquivo…":action.pending?"Registrando…":"Importar material"}</Button>
     </form>
     {jobId&&<ReadState read={job}>{data=><><p role="status">{status[data.state]||data.state}</p>
       {data.coverage?.reason&&<p>O material precisa de conferência. A leitura disponível pode estar incompleta.</p>}
@@ -85,6 +86,8 @@ export function MemorySource({sourceId,expectedVersion,context,session,close,cha
         {chunk&&<><p>Trecho de um material maior. Edições e remoções são feitas na fonte original.</p>
           {/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/.test(source.metadata?.parentSourceId||"")&&<Button size="sm" variant="secondary" onClick={()=>{setMode("view");setCurrentId(source.metadata.parentSourceId);}}>Abrir fonte original</Button>}</>}
         <p style={{whiteSpace:"pre-wrap"}}>{source.text||"Fonte sem conteúdo de texto disponível."}</p>
+        {["pending","running"].includes(source.metadata?.etlState)&&<p role="status">Material em processamento. Confira a versão novamente para acompanhar o conteúdo disponível.</p>}
+        {source.metadata?.etlState==="partial"&&<p role="status">A importação ficou parcial. Confira o conteúdo antes de usar esta fonte.</p>}
         {notice&&<p role="status">{notice}</p>}
         {editable&&<div className={css.actions}><Button size="sm" variant="secondary" onClick={()=>setMode("edit")}>Editar fonte completa</Button>
           <Button size="sm" variant="ghost" onClick={()=>setMode("delete")}>Remover fonte</Button></div>}
