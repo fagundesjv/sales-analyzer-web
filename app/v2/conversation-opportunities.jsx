@@ -9,6 +9,7 @@ import {ReaisField} from "../operation-fields";
 import {CursorNav, ReadState} from "./read-state";
 import {exactReais} from "./work-queue";
 import css from "../customer-inbox.module.css";
+import {OpportunityWork} from "./opportunity-work";
 
 const statuses = {open:"Em aberto", won:"Ganho", lost:"Perdido", resolved:"Resolvido"};
 const credits = {team:"Equipe", zoe:"Zoe", unknown:"Crédito ainda sem base suficiente"};
@@ -79,7 +80,7 @@ function OpportunitySummary({context, revision}) {
   </section>;
 }
 
-export function ConversationOpportunities({conversationId, context}) {
+export function ConversationOpportunities({conversationId, context, commercialEngine = false, conversation}) {
   const path = "conversations/" + conversationId + "/opportunities";
   const [revision, setRevision] = useState(0);
   const [selectedId, setSelectedId] = useState(null);
@@ -118,6 +119,7 @@ export function ConversationOpportunities({conversationId, context}) {
         <Button size="sm" onClick={() => setModal("won")}>Registrar ganho</Button>
         <Button size="sm" variant="ghost" onClick={() => setModal("lost")}>Registrar perda</Button>
       </>}
+      {commercialEngine && !item.legacy && <OpportunityWork key={item.id} item={item} conversation={conversation} context={context} revision={revision} />}
     </section>}</ReadState>}
     <OpportunitySummary context={context} revision={revision} />
     {modal === "create" && <NewOpportunity path={path} context={context} close={() => setModal(null)} saved={saved} />}

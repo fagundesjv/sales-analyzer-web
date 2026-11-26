@@ -9,6 +9,7 @@ import {useV2Action,useV2Page,useV2Read} from "../../lib/v2-client";
 import {selfServeWhatsApp} from "../../lib/v2-capabilities";
 import {ReadState,CursorNav} from "./read-state";
 import {DailySchedule} from "./diagnostic-schedule";
+import {AutomationPolicy} from "./commercial-settings";
 import s from "./channels.module.css";
 
 const stateLabel = {connected:"Conectado",connecting:"Aguardando conexão",disconnected:"Desconectado",
@@ -77,6 +78,7 @@ function ConnectionDialog({line, session, context, onClose, update}) {
       </div>;
     }}</ReadState>}
     {!provisioning && <DailySchedule connectionId={line.id} context={context} manager={session.workspace.role === "manager"} />}
+    {!provisioning && session.capabilities?.commercialEngine === true && !session.support && <AutomationPolicy connectionId={line.id} context={context} />}
   </ResponsiveDialog>;
 }
 
