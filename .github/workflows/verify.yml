@@ -44,4 +44,5 @@ jobs:
             .artifacts/*.tar.gz
             .artifacts/SHA256SUMS
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 14
