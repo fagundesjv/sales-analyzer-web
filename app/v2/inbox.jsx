@@ -17,6 +17,7 @@ import {ContactMark} from "../recovery-desk";
 import {initials, outcomes} from "./work-queue";
 import {CursorNav, ReadState} from "./read-state";
 import {AttendanceComposer, conversationMessages, receiptLabel} from "./attendance";
+import {ReplySuggestion} from "./reply-suggestion";
 import css from "../customer-inbox.module.css";
 import first from "./inbox-onboarding.module.css";
 
@@ -117,6 +118,7 @@ function Thread({item, context, session, refresh, focus, evidence}) {
         </div>;
       }) : <EmptyState size="compact" icon={MessageCircle} preview="inbox" title="Sem mensagens nesta leitura"
         description="Os trechos de conversa disponíveis aparecerão aqui após a análise." />}
+      <ReplySuggestion item={item} refresh={refresh} />
       {outcome && <section className={css.brief} aria-label="Desfecho registrado"><h3>{outcomes[outcome.status]}</h3>
         {outcome.status === "won" && <p>{money(outcome.amountCents)} · {outcome.confirmedAt ? "Ganho confirmado" : "Aguardando confirmação do gestor"}</p>}
         {outcome.status === "lost" && <p>{outcome.lossReason}</p>}
