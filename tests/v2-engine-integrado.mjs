@@ -29,7 +29,19 @@ async function signIn(page,actor,staffMode){
   await page.getByLabel("E-mail",{exact:true}).fill(actor.email);await page.getByLabel("Senha",{exact:true}).fill(actor.senha||actor.password);
   const response=page.waitForResponse(r=>r.url().endsWith(staffMode?"/api/v2/staff/auth/session":"/api/v2/auth/session")&&r.request().method()==="POST");
   await page.getByRole("button",{name:staffMode?"Entrar na Central":"Entrar",exact:true}).click();
-  const received=await response;assert.equal(received.status(),200,"Login real local");const session=await received.json();assert.equal(Object.hasOwn(session,"token"),false);return session;
+  const received=await response;assert.equal(received.status(),200,"Login real local");let session=await received.json();assert.equal(Object.hasOwn(session,"token"),false);
+  if(staffMode){
+    assert.equal(session.secondFactor?.state,"required","A identidade sintética deve ter autenticador configurado pelo fluxo normal.");
+    const code=actor.reserveCodes?.shift();assert.ok(typeof code==="string"&&code.length>=8,"Informe um código de reserva sintético ainda não usado.");
+    // Reserve before submitting: an interrupted browser run must never reuse a code with an unknown result.
+    await writeFile(staffFile,JSON.stringify(actor,null,2)+"\n",{mode:0o600});
+    await page.getByLabel("Código do autenticador ou de reserva",{exact:true}).fill(code);
+    const verified=page.waitForResponse(r=>r.url().endsWith("/api/v2/staff/factor")&&r.request().method()==="POST");
+    await page.getByRole("button",{name:"Confirmar código",exact:true}).click();
+    const factor=await verified;assert.equal(factor.status(),200,"Segundo fator validado pelo endpoint real");
+    session=(await factor.json()).session;assert.equal(session.secondFactor.state,"verified");
+  }
+  return session;
 }
 async function customerFlow(width){
   const {context,page,errors}=await open(width);let sourceId;
