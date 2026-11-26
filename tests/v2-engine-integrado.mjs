@@ -59,7 +59,7 @@ async function customerFlow(width){
         const get=async path=>{const r=await fetch('/api/v2/'+path,{headers:{'X-V2-Context':context},cache:'no-store'});return r.ok?r.json():null;};
         const conversations=await get('conversations?limit=100');
         for(const talk of conversations?.items||[]){
-          if(talk.source!=='evolution'||talk.pendingRevision)continue;
+          if(!['whatsapp','evolution'].includes(talk.source)||talk.pendingRevision)continue;
           const list=await get('conversations/'+talk.id+'/opportunities?limit=25');
           for(const [index,op] of (list?.items||[]).entries()){
             if(op.legacy||['won','lost'].includes(op.status))continue;

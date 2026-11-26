@@ -68,7 +68,7 @@ export function OpportunityWork({item,conversation,context,revision}) {
         {!stale&&sources.length>0&&<nav aria-label="Fontes da sugestão do pedido">{sources.map((id,i)=><ButtonLink key={id} size="sm" variant="ghost" href={inboxHref(conversation.id)+"/evidencia/"+encodeURIComponent(id)}>Ver fonte {i+1}</ButtonLink>)}</nav>}
         {!stale&&<MemoryLinks context={context} sources={r.memorySources} />}
         {!stale&&writes&&text&&sources.length<ids.length&&<p role="status">Parte das fontes está fora desta leitura. Confira o histórico antes de usar a mensagem.</p>}
-        {ready&&!same&&(writes&&conversation.source!=="evolution"?<p>Esta origem ainda não permite enviar a sugestão por aqui.</p>:
+        {ready&&!same&&(writes&&!["whatsapp","evolution"].includes(conversation.source)?<p>Esta origem ainda não permite enviar a sugestão por aqui.</p>:
           <Button size="sm" disabled={action.pending} onClick={()=>setConfirm({kind:writes?"send":"internal",revision:r.revision,text,title:step.title})}>{writes?"Resolver e enviar sugestão":"Resolver ação interna"}</Button>)}
         <Button size="sm" variant="ghost" onClick={reload}>Atualizar trabalho do pedido</Button>
       </>;

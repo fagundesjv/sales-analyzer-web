@@ -9,7 +9,7 @@ const browser=await chromium.launch({channel:"chrome"});
 async function scenario(width){
   const user={id:randomUUID(),name:"Operadora sintética",email:"operator@example.test"},workspace={id:randomUUID(),name:"Empresa sintética",role:"manager"};
   const line={id:randomUUID(),name:"Linha sintética",source:"evolution",status:"connected"};
-  const talk={id:randomUUID(),title:"Cliente recorrente",summary:"Pedido atual",source:"evolution",pendingRevision:false,evidence:[{externalId:"m-current",text:"Qual o frete para entrega?",direction:"inbound",occurredAt:new Date().toISOString()}],analysis:{reply:{state:"ready",text:"Sugestão antiga da conversa",evidenceIds:["m-current"]}}};
+  const talk={id:randomUUID(),title:"Cliente recorrente",summary:"Pedido atual",source:"whatsapp",pendingRevision:false,evidence:[{externalId:"m-current",text:"Qual o frete para entrega?",direction:"inbound",occurredAt:new Date().toISOString()}],analysis:{reply:{state:"ready",text:"Sugestão antiga da conversa",evidenceIds:["m-current"]}}};
   const op={id:randomUUID(),conversationId:talk.id,customerId:randomUUID(),legacy:false,title:"Pedido atual",status:"open",outcome:null,version:0};
   let r={revision:"revision-1",summary:"Cliente aguarda o frete deste pedido",step:{writes:true,title:"Informar o frete",action:"Responder o CEP",kind:"answer"},state:"pending",draftState:"ready",draftText:"Me passa o CEP para eu calcular a entrega deste pedido?",evidenceIds:["m-current"],stale:false};
   let round=null,actions=[],followups=[],sends=0,internals=0,consents=0;const receiptKeys=new Set();

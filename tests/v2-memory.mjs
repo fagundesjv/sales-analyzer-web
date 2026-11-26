@@ -45,7 +45,7 @@ async function scenario(width){
     if(path==="conversations/"+talk.id+"/opportunities")return json(res,200,{items:[op],nextCursor:null});
     if(path==="opportunities/"+op.id)return json(res,200,{...op,history:{items:[],limited:false}});
     if(path==="opportunities/summary")return json(res,200,{sales:0,salesWithoutAmount:0,amountCents:"0"});
-    if(path==="sources/capabilities")return json(res,200,{items:[],providers:[{id:"evolution"},{id:"nowz",available:nowzReady,...(nowzReady?{setup:"verified_binding"}:{reason:"setup_required"})},{id:"datacrazy",available:false}]});
+    if(path==="sources/capabilities")return json(res,200,{items:[{connection_id:randomUUID(),provider:"whatsapp",coverage:{historyComplete:false},capabilities:{send:true}}],providers:[{id:"whatsapp"},{id:"nowz",available:nowzReady,...(nowzReady?{setup:"verified_binding"}:{reason:"setup_required"})},{id:"datacrazy",available:false}]});
     if(path==="sources/nowz"){nowz++;assert.equal(body.credentialRef,"prepared-binding");return json(res,201,{id:randomUUID(),provider:"nowz",coverage:{state:"partial",historyComplete:false},sending:false});}
     return json(res,404,{error:{message:"Indisponível"}});
   });
@@ -76,7 +76,7 @@ async function scenario(width){
     await memory.getByRole("button",{name:"Negociação",exact:true}).click();await memory.getByText("O cliente aguarda entrega deste novo pedido.",{exact:true}).waitFor();
     source.deleted=true;await page.getByRole("button",{name:"Ver Política comercial",exact:true}).click();await dialog().getByText("Esta fonte foi removida, mudou de acesso ou não está mais disponível.",{exact:true}).waitFor();assert.equal(await dialog().getByText("FIM DO DOCUMENTO",{exact:false}).count(),0);await page.keyboard.press("Escape");
     if(shots)await page.screenshot({path:shots+`/memoria-${width}.png`,fullPage:true});
-    await page.goto(fixture.origin+"/#conexao");await page.getByText("Solicite a conexão da sua conta Nowz.",{exact:true}).waitFor();assert.equal(await page.getByRole("button",{name:"Conectar Nowz",exact:true}).count(),0);
+    await page.goto(fixture.origin+"/#conexao");await page.getByText("Solicite a conexão da sua conta Nowz.",{exact:true}).waitFor();assert.equal(await page.getByRole("heading",{name:"WhatsApp",exact:true}).count(),1);assert.equal(await page.getByRole("button",{name:"Conectar Nowz",exact:true}).count(),0);
     nowzReady=true;await page.reload();await page.getByRole("button",{name:"Conectar Nowz",exact:true}).click();const connect=page.getByRole("dialog",{name:"Conectar Nowz",exact:true});
     await connect.getByLabel("Nome da conexão",{exact:true}).fill("Atendimento da empresa");await connect.getByLabel("Código de conexão",{exact:true}).fill("prepared-binding");await connect.getByLabel("Canais da conta Nowz",{exact:true}).fill("channel-synthetic");await connect.getByRole("button",{name:"Conferir e conectar Nowz",exact:true}).click();await connect.waitFor({state:"hidden"});assert.equal(nowz,1);
     assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);

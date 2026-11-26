@@ -6,7 +6,7 @@ import {ResponsiveDialog} from "../../src/ui/os/responsive-dialog";
 import {useV2Action,useV2Read} from "../../lib/v2-client";
 import {ReadState} from "./read-state";
 import css from "./central-ai.module.css";
-const names={nowz:"Nowz",evolution:"WhatsApp",datacrazy:"Datacrazy"};
+const names={nowz:"Nowz",whatsapp:"WhatsApp",evolution:"WhatsApp",datacrazy:"Datacrazy"};
 function ConnectNowz({context,close,saved}) {
   const action=useV2Action(context);
   return <ResponsiveDialog open title="Conectar Nowz" size="sm" onClose={close} dismissible={!action.pending}>
@@ -29,7 +29,7 @@ export function SourceCatalog({context,session}) {
   if(read.error?.status===404)return null;
   return <DetailSection title="Sistemas de atendimento">
     <ReadState read={read}>{data=><>
-      {data.providers.filter(p=>p.id!=="evolution").map(provider=><section key={provider.id} aria-label={names[provider.id]||provider.id}>
+      {data.providers.filter(p=>!["whatsapp","evolution"].includes(p.id)).map(provider=><section key={provider.id} aria-label={names[provider.id]||provider.id}>
         <h3>{names[provider.id]||provider.id}</h3>
         <p>{provider.reason==="setup_required"?"Solicite a conexão da sua conta Nowz.":provider.available!==true?"Conexão em avaliação. A importação será liberada após a validação da integração.":"Importação de conversas com cobertura do histórico acompanhada por conexão."}</p>
         {provider.id==="nowz"&&provider.available===true&&session.workspace.role==="manager"&&<Button variant="secondary" size="sm" onClick={()=>setConnecting(true)}>Conectar Nowz</Button>}
