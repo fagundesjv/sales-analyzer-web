@@ -12,52 +12,67 @@ const bundle = resolve(process.argv[2] || "");
 assert.ok(process.argv[2], "Informe o pacote Web compilado.");
 const state = process.env.SA_INTEGRADO_DIR;
 assert.ok(state, "Informe o diretório privado do ambiente integrado isolado.");
-const settings = parseEnv(await readFile(join(state, "bff.env"), "utf8"));
-const api = new URL(settings.SA_API_URL);
-assert.equal(api.hostname, "127.0.0.1", "Este ensaio aceita apenas API local.");
-assert.equal(api.protocol, "http:");
 const accounts = JSON.parse(await readFile(join(state, "contas.json"), "utf8"));
 const manager = accounts.gestora;
 assert.ok(manager?.email.endsWith(".test") && manager.senha, "O ensaio exige a conta sintética da gestora.");
 const port = Number(process.env.SA_MOTOR_WEB_PORT || 4619);
 assert.ok(Number.isInteger(port) && port >= 1024 && port <= 65535);
-const origin = "http://127.0.0.1:" + port;
-const {createV2Bff} = await import(pathToFileURL(join(bundle, "server/v2-bff.mjs")));
-const bff = createV2Bff({apiOrigin:api.origin, webOrigin:origin, serviceKey:settings.SA_SERVICE_KEY});
+const externalOrigin = process.env.SA_MOTOR_EXTERNAL_ORIGIN;
+const origin = externalOrigin || "http://127.0.0.1:" + port;
+assert.equal(new URL(origin).hostname, "127.0.0.1", "Este ensaio aceita apenas Web local.");
+assert.equal(new URL(origin).protocol, "http:");
+assert.equal(new URL(origin).origin, origin, "Informe apenas a origem local, sem caminho.");
 const revision = (await readFile(join(bundle, "REVISION"), "utf8")).trim();
 assert.match(revision, /^sha256:[0-9a-f]{64}$/);
-const site = join(bundle, "site"), assets = new Map();
-const mime = {".js":"text/javascript", ".css":"text/css", ".png":"image/png", ".svg":"image/svg+xml",
-  ".woff2":"font/woff2", ".woff":"font/woff", ".ttf":"font/ttf", ".json":"application/json"};
-async function index(directory) {
-  for (const entry of await readdir(join(site, directory), {withFileTypes:true})) {
-    const relative = directory + "/" + entry.name;
-    if (entry.isDirectory()) await index(relative);
-    else if (mime[extname(entry.name)]) assets.set("/" + relative, join(site, relative));
+
+async function startLocalWeb() {
+  const settings = parseEnv(await readFile(join(state, "bff.env"), "utf8"));
+  const api = new URL(settings.SA_API_URL);
+  assert.equal(api.hostname, "127.0.0.1", "Este ensaio aceita apenas API local.");
+  assert.equal(api.protocol, "http:");
+  const {createV2Bff} = await import(pathToFileURL(join(bundle, "server/v2-bff.mjs")));
+  const bff = createV2Bff({apiOrigin:api.origin, webOrigin:origin, serviceKey:settings.SA_SERVICE_KEY});
+  const site = join(bundle, "site"), assets = new Map();
+  const mime = {".js":"text/javascript", ".css":"text/css", ".png":"image/png", ".svg":"image/svg+xml",
+    ".woff2":"font/woff2", ".woff":"font/woff", ".ttf":"font/ttf", ".json":"application/json"};
+  async function index(directory) {
+    for (const entry of await readdir(join(site, directory), {withFileTypes:true})) {
+      const relative = directory + "/" + entry.name;
+      if (entry.isDirectory()) await index(relative);
+      else if (mime[extname(entry.name)]) assets.set("/" + relative, join(site, relative));
+    }
   }
+  await index("_next/static");
+  await index("assets");
+  await index("zoe-avatar");
+  const html = await readFile(join(site, "index.html"));
+  assert.ok(html.includes('data-sales-mode="integrated"'));
+  const server = createServer(async (req, res) => {
+    if (req.headers.host !== new URL(origin).host) return res.writeHead(403).end();
+    if (req.url.startsWith("/api/v2/")) return bff(req, res);
+    if (req.method !== "GET") return res.writeHead(405).end();
+    const pathname = new URL(req.url, origin).pathname;
+    if (pathname === "/healthz") return res.writeHead(200, {"Content-Type":"application/json"}).end(JSON.stringify({status:"ok", revision}));
+    if (pathname === "/") return res.writeHead(200, {"Content-Type":"text/html"}).end(html);
+    const file = assets.get(pathname);
+    if (!file) return res.writeHead(404).end();
+    res.writeHead(200, {"Content-Type":mime[extname(file)]});
+    res.end(await readFile(file));
+  });
+  await new Promise((ok, fail) => {server.once("error", fail); server.listen(port, "127.0.0.1", ok);});
+  return server;
 }
-await index("_next/static");
-await index("assets");
-await index("zoe-avatar");
-const html = await readFile(join(site, "index.html"));
-assert.ok(html.includes('data-sales-mode="integrated"'));
-const server = createServer(async (req, res) => {
-  if (req.headers.host !== new URL(origin).host) return res.writeHead(403).end();
-  if (req.url.startsWith("/api/v2/")) return bff(req, res);
-  if (req.method !== "GET") return res.writeHead(405).end();
-  const pathname = new URL(req.url, origin).pathname;
-  if (pathname === "/") return res.writeHead(200, {"Content-Type":"text/html"}).end(html);
-  const file = assets.get(pathname);
-  if (!file) return res.writeHead(404).end();
-  res.writeHead(200, {"Content-Type":mime[extname(file)]});
-  res.end(await readFile(file));
-});
-await new Promise((ok, fail) => {server.once("error", fail); server.listen(port, "127.0.0.1", ok);});
-const browser = await chromium.launch({channel:"chrome"});
+
+const server = externalOrigin ? null : await startLocalWeb();
+let browser;
 const shots = process.env.SA_EVIDENCE_DIR;
 if (shots) await mkdir(shots, {recursive:true});
 const results = [];
 try {
+  const response = await fetch(origin + "/healthz", {signal:AbortSignal.timeout(10000)});
+  assert.equal(response.status, 200, "Runtime local deve estar saudável.");
+  assert.deepEqual(await response.json(), {status:"ok", revision}, "A revisão do runtime deve corresponder ao pacote informado.");
+  browser = await chromium.launch({channel:"chrome"});
   for (const width of [1440, 390]) {
     const context = await browser.newContext({viewport:{width, height:width < 600 ? 844 : 900}});
     const page = await context.newPage();
@@ -107,7 +122,8 @@ try {
       await page.reload();
       await suggestion.getByText(chosen.analysis.reply.text, {exact:true}).waitFor();
       assert.deepEqual(errors, []);
-      const result = {width, webRevision:revision, api:"integrated-local", database:"postgres", providers:"internal-deterministic",
+      const result = {width, webRevision:revision, webRuntime:externalOrigin ? "packaged-private-web" : "local-bff-harness",
+        api:"integrated-local", database:"postgres", providers:"internal-deterministic",
         realLogin:true, publishedSuggestion:true, sourceOpened:true, persistedAfterReload:true, conversationId:chosen.id};
       results.push(result);
       console.log(JSON.stringify(result));
@@ -117,6 +133,6 @@ try {
   }
   if (shots) await writeFile(join(shots, "motor-integrado-resultados.json"), JSON.stringify(results, null, 2) + "\n");
 } finally {
-  await browser.close();
-  await new Promise(ok => server.close(ok));
+  await browser?.close();
+  if (server) await new Promise(ok => server.close(ok));
 }
