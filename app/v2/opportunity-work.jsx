@@ -7,9 +7,11 @@ import {useV2Action,useV2Read} from "../../lib/v2-client";
 import {inboxHref,localDate} from "../../lib/inbox";
 import {ReadState} from "./read-state";
 import css from "../customer-inbox.module.css";
+import {MemoryLinks,memoryReferences} from "./memory-source";
 
 const stateNames={pending:"Ação pendente",watching:"Em acompanhamento",resolved:"Ação interna resolvida",review:"Revisão necessária",closed:"Pedido encerrado"};
 const receipts={queued:"Envio na fila",dispatching:"Envio em andamento",accepted:"Mensagem aceita pelo canal",uncertain:"Entrega incerta",cancelled:"Envio cancelado",resolved:"Ação interna resolvida"};
+const reasons={delivery_unknown:"O canal ainda não confirmou a entrega.",dispatch_interrupted:"A confirmação do envio foi interrompida.",suggestion_changed:"A conversa ou sugestão mudou antes do envio.",source_or_account_changed:"A fonte ou autorização da conta mudou.",consent_changed:"As condições de envio automático foram alteradas.",review_required:"Esta ação exige revisão do operador.",access_revoked:"O acesso à linha mudou.",channel_unavailable:"O canal está indisponível para envio.",receipt_reconciled:"Entrega conferida na mensagem importada."};
 function NewFollowup({path,item,context,close,saved}) {
   const action=useV2Action(context);
   return <ResponsiveDialog open title="Agendar retorno do pedido" description={item.title} size="sm" onClose={close} dismissible={!action.pending}>
@@ -54,15 +56,18 @@ export function OpportunityWork({item,conversation,context,revision}) {
       const step=r.step, text=r.draftText?.trim(), writes=step?.writes===true;
       const ready=!closed&&!stale&&r.state==="pending"&&(writes?r.draftState==="ready"&&Boolean(text):step?.writes===false);
       const same=r.revision&&actions.data?.items.some(a=>a.revision===r.revision&&a.kind===(writes?"send":"internal")&&["queued","dispatching","accepted","uncertain","resolved"].includes(a.state));
-      const sources=[...new Set(r.evidenceIds||[])].filter(id=>conversation.evidence?.some(m=>m.externalId===id));
+      const memoryIds=new Set(memoryReferences(r.memorySources).map(source=>source.reference));
+      const ids=[...new Set(r.evidenceIds||[])].filter(id=>!memoryIds.has(id));
+      const sources=ids.filter(id=>conversation.evidence?.some(m=>m.externalId===id));
       return <>
-        <DetailRows items={[{label:"Leitura",value:r.summary||"Sem resumo"},{label:"Situação",value:stale?"Sugestão desatualizada":stateNames[r.state]||r.state},
+        <DetailRows items={[{label:"Leitura",value:r.summary||"Sem resumo"},{label:"Situação",value:stale?"Sugestão desatualizada":stateNames[r.state]||"Aguardando conferência"},
           ...(step?.title?[{label:"Próximo passo",value:step.title}]:[]),...(step?.action?[{label:"O que fazer",value:step.action}]:[])]} />
         {stale?<p role="status">A conversa ou as fontes mudaram. Atualize a leitura antes de executar a sugestão.</p>:
           writes&&text&&r.draftState==="ready"?<blockquote>{text}</blockquote>:
           writes?<p role="status">{r.draftState==="no_quota"?"A redação aguarda liberação do limite de análise.":"A Zoe está preparando a redação deste pedido."}</p>:null}
         {!stale&&sources.length>0&&<nav aria-label="Fontes da sugestão do pedido">{sources.map((id,i)=><ButtonLink key={id} size="sm" variant="ghost" href={inboxHref(conversation.id)+"/evidencia/"+encodeURIComponent(id)}>Ver fonte {i+1}</ButtonLink>)}</nav>}
-        {!stale&&writes&&text&&sources.length<(r.evidenceIds||[]).length&&<p role="status">Parte das fontes está fora desta leitura. Confira o histórico antes de usar a mensagem.</p>}
+        {!stale&&<MemoryLinks context={context} sources={r.memorySources} />}
+        {!stale&&writes&&text&&sources.length<ids.length&&<p role="status">Parte das fontes está fora desta leitura. Confira o histórico antes de usar a mensagem.</p>}
         {ready&&!same&&(writes&&conversation.source!=="evolution"?<p>Esta origem ainda não permite enviar a sugestão por aqui.</p>:
           <Button size="sm" disabled={action.pending} onClick={()=>setConfirm({kind:writes?"send":"internal",revision:r.revision,text,title:step.title})}>{writes?"Resolver e enviar sugestão":"Resolver ação interna"}</Button>)}
         <Button size="sm" variant="ghost" onClick={reload}>Atualizar trabalho do pedido</Button>
@@ -70,8 +75,8 @@ export function OpportunityWork({item,conversation,context,revision}) {
     }}</ReadState>
     <h4>Recibos das ações</h4>
     <ReadState read={actions}>{data=>data.items.length?data.items.map(receipt=><section key={receipt.id} aria-label="Recibo da ação">
-      <DetailRows items={[{label:"Ação",value:receipts[receipt.state]||receipt.state},{label:"Origem",value:receipt.origin==="automatic"?"Automática com consentimento":"Operador"},
-        ...(receipt.reason?[{label:"Detalhe",value:receipt.reason}]:[])]} />
+      <DetailRows items={[{label:"Ação",value:receipts[receipt.state]||"Estado a conferir"},{label:"Origem",value:receipt.origin==="automatic"?"Automática com consentimento":"Operador"},
+        ...(receipt.reason?[{label:"Detalhe",value:reasons[receipt.reason]||"Confira o estado antes de executar outra ação."}]:[])]} />
       {receipt.state==="uncertain"&&<><p>A entrega ficou incerta. Nenhum reenvio automático será feito.</p><Button variant="secondary" size="sm" onClick={()=>setReconcile(receipt)}>Conferir envio</Button></>}
     </section>):<p>Nenhuma ação executada para este pedido.</p>}</ReadState>
     <h4>Retornos deste pedido</h4>

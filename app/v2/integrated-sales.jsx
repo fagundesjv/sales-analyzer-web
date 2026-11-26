@@ -26,6 +26,7 @@ import {PasswordRecovery} from "./password-recovery";
 import {CentralAi} from "./central-ai";
 import {CommercialSettings} from "./commercial-settings";
 import {ReadingSettings} from "./reading-settings";
+import {MemoryContext} from "./memory-context";
 
 const titles = Object.fromEntries(settingsSections.map(x => [x.id, x.title]));
 Object.assign(titles, {dashboard:"Dashboard", radar:"Radar", oportunidades:"Negociações",
@@ -77,6 +78,7 @@ function Company({session, context, onSwitch}) {
     <ButtonLink href="#convite" variant="secondary">Aceitar convite de outra empresa</ButtonLink>
     {session.capabilities?.readingSettings === true && !session.support && <ReadingSettings session={session} context={context} />}
     {session.capabilities?.commercialEngine === true && !session.support && <CommercialSettings session={session} context={context} />}
+    {session.capabilities?.memory === true && !session.support && <MemoryContext session={session} context={context} />}
   </DetailPage>;
 }
 

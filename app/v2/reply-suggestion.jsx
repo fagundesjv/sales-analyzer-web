@@ -2,6 +2,7 @@
 import {Button, ButtonLink} from "@content-ventures/design-system/v3";
 import {inboxHref} from "../../lib/inbox";
 import css from "../customer-inbox.module.css";
+import {MemoryLinks,memoryReferences} from "./memory-source";
 
 const waiting = {
   writing: "A Zoe está preparando a sugestão desta leitura.",
@@ -9,13 +10,14 @@ const waiting = {
   unavailable: "A sugestão desta leitura ainda não está disponível.",
 };
 
-export function ReplySuggestion({item, refresh, title = "Sugestão da Zoe"}) {
+export function ReplySuggestion({item, refresh, title = "Sugestão da Zoe", context}) {
   const reply = item.analysis?.reply;
   if (!reply) return null;
 
   const stale = Boolean(item.pendingRevision);
   const ready = !stale && reply.state === "ready" && Boolean(reply.text?.trim());
-  const ids = [...new Set(reply.evidenceIds ?? [])];
+  const memory = memoryReferences(item.analysis?.memorySources), memoryIds = new Set(memory.map(source=>source.reference));
+  const ids = [...new Set(reply.evidenceIds ?? [])].filter(id=>!memoryIds.has(id));
   const evidence = item.evidence ?? [];
   const sources = ids.filter(id => evidence.some(message => message.externalId === id));
   const missing = sources.length < ids.length;
@@ -30,9 +32,10 @@ export function ReplySuggestion({item, refresh, title = "Sugestão da Zoe"}) {
           Ver fonte {index + 1}
         </ButtonLink>)}
       </nav>}
-      {(missing || ids.length === 0) && <p role="status">
+      {(missing || ids.length === 0 && memory.length === 0) && <p role="status">
         Parte das fontes da sugestão está fora desta leitura. Consulte o histórico antes de usar o texto.
       </p>}
+      {context&&<MemoryLinks context={context} sources={item.analysis?.memorySources} />}
     </> : <>
       <p role="status">{stale
         ? "A conversa mudou após esta sugestão. Atualize a leitura antes de usar o texto."

@@ -10,6 +10,7 @@ import {CursorNav, ReadState} from "./read-state";
 import {exactReais} from "./work-queue";
 import css from "../customer-inbox.module.css";
 import {OpportunityWork} from "./opportunity-work";
+import {MemoryContext} from "./memory-context";
 
 const statuses = {open:"Em aberto", won:"Ganho", lost:"Perdido", resolved:"Resolvido"};
 const credits = {team:"Equipe", zoe:"Zoe", unknown:"Crédito ainda sem base suficiente"};
@@ -80,7 +81,7 @@ function OpportunitySummary({context, revision}) {
   </section>;
 }
 
-export function ConversationOpportunities({conversationId, context, commercialEngine = false, conversation}) {
+export function ConversationOpportunities({conversationId, context, commercialEngine = false, conversation, session}) {
   const path = "conversations/" + conversationId + "/opportunities";
   const [revision, setRevision] = useState(0);
   const [selectedId, setSelectedId] = useState(null);
@@ -120,6 +121,7 @@ export function ConversationOpportunities({conversationId, context, commercialEn
         <Button size="sm" variant="ghost" onClick={() => setModal("lost")}>Registrar perda</Button>
       </>}
       {commercialEngine && !item.legacy && <OpportunityWork key={item.id} item={item} conversation={conversation} context={context} revision={revision} />}
+      {session?.capabilities?.memory === true && !session.support && <MemoryContext key={"memory/"+item.id} session={session} context={context} conversationId={conversationId} opportunityId={item.legacy?undefined:item.id} />}
     </section>}</ReadState>}
     <OpportunitySummary context={context} revision={revision} />
     {modal === "create" && <NewOpportunity path={path} context={context} close={() => setModal(null)} saved={saved} />}

@@ -94,7 +94,7 @@ function Thread({item, context, session, refresh, focus, evidence}) {
   return <article className={css.thread} aria-label={"Atendimento de " + item.title}>
     <header className={css.threadHead}><a className={css.back} href="#entrada" aria-label="Voltar à lista de conversas"><ArrowLeft size={19} /></a>
       <span className={css.headerMark}><ContactMark s={{tone:"sage",initials:initials(item.title)}} /></span>
-      <div className={css.identity}><div className={css.identityLine}><h2>{item.title}</h2></div><small>{item.source === "synthetic" ? "Conversa de exemplo" : "WhatsApp"}</small></div>
+      <div className={css.identity}><div className={css.identityLine}><h2>{item.title}</h2></div><small>{item.source === "synthetic" ? "Conversa de exemplo" : item.source === "nowz" ? "Nowz" : "WhatsApp"}</small></div>
       <div className={css.threadUtilities}><IconAction className={css.headTool} disabled={favorite.pending}
         aria-label={item.favorite ? "Remover dos favoritos" : "Favoritar conversa"} aria-pressed={item.favorite}
         onClick={() => favorite.run("conversations/" + item.id + "/favorite","PUT",{favorite:!item.favorite},() => refresh())}>
@@ -121,8 +121,8 @@ function Thread({item, context, session, refresh, focus, evidence}) {
         </div>;
       }) : <EmptyState size="compact" icon={MessageCircle} preview="inbox" title="Sem mensagens nesta leitura"
         description="Os trechos de conversa disponíveis aparecerão aqui após a análise." />}
-      {!commercialEngine && <ReplySuggestion item={item} refresh={refresh} title={opportunities ? "Sugestão da conversa" : "Sugestão da Zoe"} />}
-      {opportunities && <ConversationOpportunities conversationId={item.id} context={context} commercialEngine={commercialEngine} conversation={item} />}
+      {!commercialEngine && <ReplySuggestion item={item} refresh={refresh} context={context} title={opportunities ? "Sugestão da conversa" : "Sugestão da Zoe"} />}
+      {opportunities && <ConversationOpportunities conversationId={item.id} context={context} commercialEngine={commercialEngine} conversation={item} session={session} />}
       {!opportunities && outcome && <section className={css.brief} aria-label="Desfecho registrado"><h3>{outcomes[outcome.status]}</h3>
         {outcome.status === "won" && <p>{money(outcome.amountCents)} · {outcome.confirmedAt ? "Ganho confirmado" : "Aguardando confirmação do gestor"}</p>}
         {outcome.status === "lost" && <p>{outcome.lossReason}</p>}

@@ -28,6 +28,10 @@ const routes = [
   ["GET", "commercial/settings"], ["PUT", "commercial/settings"],
   ["GET", "automation/policies"], ["GET", "automation/policies/" + uuid], ["PUT", "automation/policies/" + uuid],
   ["GET", "reading-settings"], ["PUT", "reading-settings"],
+  ["GET", "memory/search"], ["GET", "memory/sources/"+uuid],
+  ["POST", "memory/documents"], ["PUT", "memory/documents/"+uuid], ["DELETE", "memory/documents/"+uuid],
+  ["POST", "memory/materials"], ["GET", "memory/materials/"+uuid],
+  ["GET", "sources/capabilities"], ["POST", "sources/nowz"],
   ["GET", attendance], ["POST", attendance], ["POST", attendance + "/messages"],
   ["PUT", "conversations/" + uuid + "/favorite"], ["PUT", "conversations/" + uuid + "/outcome"],
   ["GET", "focus"], ["POST", "focus"], ["PATCH","focus/" + uuid],
@@ -44,6 +48,7 @@ const listQueries = {
   returns:["limit","cursor","status","conversationId","throughDate"],
   "zoe/history":["limit","cursor"], "budget/usage":["period"], team:["limit","cursor"],
   "catalog/items":["limit","cursor","q","kind","status"], pipelines:["limit","cursor"], alerts:["limit","cursor","kind","read"],
+  "memory/search":["q","scope","conversationId","opportunityId","limit"],
 };
 const pipelineBoardPath = new RegExp("^pipelines/" + uuid + "$");
 const pipelineStagePath = new RegExp("^pipelines/" + uuid + "/stages/" + uuid + "/cards$");
@@ -52,13 +57,15 @@ function queryFor(path, method, raw) {
   if (!raw) return "";
   const pipelineBoard = pipelineBoardPath.test(path), pipelineStage = pipelineStagePath.test(path);
   const filters = opportunityListPath.test(path) ? ["limit","cursor"] : pipelineBoard ? ["limit","assigneeId"] : pipelineStage ? ["limit","assigneeId","cursor"] : listQueries[path];
-  if (raw.length > 1200 || method !== "GET" || !Array.isArray(filters))
+  const memory = path === "memory/search";
+  if (raw.length > (memory ? 8000 : 1200) || method !== "GET" || !Array.isArray(filters))
     throw fail(400, "Consulta indisponível.");
   const params = new URLSearchParams(raw);
   for (const [name,value] of params) {
     if (!filters.includes(name) || params.getAll(name).length !== 1 ||
-        (name === "q" && (value.length > 80 || value.includes("\0"))) ||
-        (name === "limit" && (!/^(?:[1-9][0-9]?|100)$/.test(value) || ((path === "zoe/history" || path === "alerts" || pipelineBoard || pipelineStage) && Number(value) > 50))) ||
+        (name === "q" && (value.length > (memory ? 2000 : 80) || value.includes("\0"))) ||
+        (name === "limit" && (!/^(?:[1-9][0-9]?|100)$/.test(value) || ((memory || path === "zoe/history" || path === "alerts" || pipelineBoard || pipelineStage) && Number(value) > 50))) ||
+        (name === "scope" && !["company","line","customer","opportunity","private"].includes(value)) ||
         (name === "outcome" && !["won","lost","resolved","open"].includes(value)) ||
         (name === "favorite" && !["true","false"].includes(value)) ||
         (name === "kind" && !(path === "alerts" ? ["risk","loss","disconnected"] : ["product","service"]).includes(value)) ||
@@ -66,7 +73,7 @@ function queryFor(path, method, raw) {
         (name === "status" && !(path === "catalog/items" ? ["available","on_request","unavailable","archived"] : ["open","completed"]).includes(value)) ||
         (name === "throughDate" && !/^\d{4}-\d{2}-\d{2}$/.test(value)) ||
         (name === "period" && !/^[1-9]\d{3}-(0[1-9]|1[0-2])$/.test(value)) ||
-        (["connectionId","conversationId","assigneeId"].includes(name) && !uuidValue.test(value)) ||
+        (["connectionId","conversationId","opportunityId","assigneeId"].includes(name) && !uuidValue.test(value)) ||
         (name === "cursor" && !(["diagnostics","returns","alerts"].includes(path) ? /^[A-Za-z0-9_-]{1,160}$/.test(value) : uuidValue.test(value))))
       throw fail(400, "Filtro ou paginação inválida.");
   }
@@ -80,8 +87,8 @@ const upstreamDeadlines = new Map([
   ["auth/recovery/confirm", 17000],
 ]);
 
-async function bodyOf(req, limit) {
-  if (req.method === "GET" || req.method === "DELETE") return;
+async function bodyOf(req, limit, deleteBody = false) {
+  if (req.method === "GET" || req.method === "DELETE" && !deleteBody) return;
   if (req.headers["content-type"]?.split(";")[0] !== "application/json")
     throw fail(415, "Envie os dados em JSON.");
   const chunks = [];
@@ -139,11 +146,13 @@ export function createV2Bff({apiOrigin, webOrigin, serviceKey, adminKey, network
       const key = req.headers["idempotency-key"];
       const optionalCatalogKey = req.method === "PATCH" && path.startsWith("catalog/items/") && key === undefined;
       const optionalAttendanceKey = req.method === "POST" && attendanceStart.test(path) && key === undefined;
-      if (["POST","PUT","PATCH"].includes(req.method) && usesSession && path !== "session/workspace" && !path.endsWith("/pairing") && !optionalCatalogKey && !optionalAttendanceKey) {
+      const memoryDocument = /^memory\/documents(?:\/|$)/.test(path);
+      const memoryDelete = req.method === "DELETE" && memoryDocument;
+      if ((["POST","PUT","PATCH"].includes(req.method) || memoryDelete) && usesSession && path !== "session/workspace" && !path.endsWith("/pairing") && !optionalCatalogKey && !optionalAttendanceKey) {
         if (!key || !/^[A-Za-z0-9._:-]{1,128}$/.test(key)) throw fail(400, "Identificador da operação inválido.");
         headers["Idempotency-Key"] = key;
       }
-      const body = await bodyOf(req, req.method === "POST" && attendanceSend.test(path) ? 32 * 1024 : 8192);
+      const body = await bodyOf(req, path === "memory/materials" ? 8*1024*1024 : memoryDocument ? 1024*1024 : req.method === "POST" && attendanceSend.test(path) ? 32 * 1024 : 8192, memoryDelete);
       if (body !== undefined) headers["Content-Type"] = "application/json";
       const upstream = (endpoint, options) => fetch(api.origin + "/v1/" + endpoint, {
         headers, redirect: "error", signal: AbortSignal.timeout(upstreamDeadlines.get(path) ?? 9000), ...options,

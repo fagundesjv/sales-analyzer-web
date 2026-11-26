@@ -2,6 +2,8 @@
 .central { max-width: 1120px; margin-inline: auto; padding: var(--s-5); min-height: 100dvh; overflow-wrap: anywhere; }
 .choices { display: flex; flex-wrap: wrap; gap: var(--s-3); }
 .form { display: grid; gap: var(--s-3); }
+.form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.form legend { padding: 0; margin-block-end: var(--s-2); }
 .list { display: grid; gap: var(--s-4); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
 @media(max-width: 640px) { .central { padding: var(--s-3); } }
