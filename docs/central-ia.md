@@ -4,7 +4,7 @@ Entrada administrativa `/#central-ia`, com a conta staff existente. A sessão da
 
 Configure `SA_ADMIN_KEY` somente no runtime do Web (além de `SA_SERVICE_KEY`) e na API. Sem a chave, a Central retorna indisponível. Nunca use variável `NEXT_PUBLIC` para credenciais. O segundo fator existente continua obrigatório quando exigido pela sessão staff.
 
-A biblioteca aparece apenas com `SA_AI_CATALOG_ENABLED=1` na API. Owner pode cadastrar e editar fornecedores/modelos, registrar uma nova tarifa com fonte e vigência, definir reserva/sombra por função, solicitar promoção com conjunto humano rotulado, reverter a última rota e alterar orçamentos. Viewer e account_manager consultam sem botões de escrita.
+A biblioteca administrativa permite preparar cadastros e tarifas antes de ativar `SA_AI_CATALOG_ENABLED`. Owner pode cadastrar e editar fornecedores/modelos, registrar uma nova tarifa com fonte e vigência e alterar orçamentos. Reserva/sombra, promoção e reversão ficam desabilitadas até a implantação ativar a execução por catálogo. Viewer e account_manager consultam sem botões de escrita.
 
 Modelos sem tarifa verificada ficam indisponíveis nos seletores. Promoção é validada no backend contra a amostra real da sombra; o painel não aprova candidatos por reputação. Credenciais de fornecedores nunca são preenchidas ou retornadas pela interface: o cadastro contém apenas a referência do arquivo no worker.
 

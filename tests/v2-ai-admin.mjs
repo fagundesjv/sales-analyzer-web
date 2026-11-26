@@ -7,10 +7,10 @@ import {staffWeb,json} from "./fixtures/staff-web.mjs";
 const bundle=process.argv[2];assert.ok(bundle,"Informe o pacote compilado.");
 const shots=process.env.SA_EVIDENCE_DIR;if(shots)await mkdir(shots,{recursive:true});
 const browser=await chromium.launch({channel:"chrome"});
-async function scenario(width,owner){
+async function scenario(width,owner,executionEnabled=true){
   const id=randomUUID(),workspaceId=randomUUID(),conversationId=randomUUID();
   const session={staff:{id,name:"Equipe sintética",role:owner?"owner":"viewer"},secondFactor:{state:"verified"}};
-  const data={canEdit:owner,protocols:["openai","gemini","typesafe","firecrawl"],stages:["draft","classify","transcribe","image","document","chat","link"],
+  const data={executionEnabled,canEdit:owner,protocols:["openai","gemini","typesafe","firecrawl"],stages:["draft","classify","transcribe","image","document","chat","link"],
     providers:[{id:"openai",label:"OpenAI",protocol:"openai",host:"api.openai.com",credentialRef:"openai",enabled:true,version:1}],
     models:[{provider:"openai",model:"main-test",label:"Principal sintético",stages:["draft"],enabled:true,shadowOnly:false,version:1},
       {provider:"openai",model:"candidate-test",label:"Candidato sintético",stages:["draft"],enabled:true,shadowOnly:false,version:1}],
@@ -18,7 +18,7 @@ async function scenario(width,owner){
     settings:{version:1,shadowMonthlyMicros:"1000000"}};
   let current={stage:"draft",version:null,principal:"openai:main-test",reserve:null,shadow:null,shadowPercent:0,timeoutMs:15000},history=[];
   const draft={workspaceId,conversationId,revision:"revision-test",state:"no_quota",reason:"ai_cost_limit"};
-  const overview={calls:[{mode:"local_simulated",stage:"draft",provider:"openai",model:"main-test",lane:"principal",state:"settled",calls:3,settledMicros:"321",reservedMicros:"0",latencyMs:120}],
+  const overview={executionEnabled,calls:[{mode:"local_simulated",stage:"draft",provider:"openai",model:"main-test",lane:"principal",state:"settled",calls:3,settledMicros:"321",reservedMicros:"0",latencyMs:120}],
     failures:[],queue:{drafts:2,diagnostics:1,oldestDraft:null},budgets:[{workspaceId,name:"Empresa sintética",monthlyMicros:"10000000",settledMicros:"321",reservedMicros:"0",blockedReason:null}],draftFailures:[draft]};
   let writes=0,promotions=0,reprocessed=0;
   const fixture=await staffWeb(bundle,(req,res,path,body,token)=>{
@@ -58,6 +58,13 @@ async function scenario(width,owner){
     await page.getByRole("heading",{name:"Central de IA",exact:true}).waitFor();
     await page.getByRole("combobox",{name:"Modelo de reserva",exact:true}).waitFor();
     assert.equal(await context.cookies().then(items=>items.filter(item=>item.name==="sa2_staff").every(item=>item.httpOnly)),true);
+    if(owner&&!executionEnabled){
+      assert.equal(await page.getByRole("button",{name:"Salvar reserva e sombra",exact:true}).isDisabled(),true);
+      await page.getByRole("button",{name:"Biblioteca",exact:true}).click();await page.getByRole("button",{name:"Cadastrar fornecedor",exact:true}).click();
+      const provider=dialog("Cadastrar fornecedor");await provider.getByLabel("Identificador do fornecedor",{exact:true}).fill("bootstrap_test");await provider.getByLabel("Nome do fornecedor",{exact:true}).fill("Bootstrap sem execução");await provider.getByLabel("Referência da credencial no servidor",{exact:true}).fill("bootstrap_test");await provider.getByLabel("Motivo da alteração",{exact:true}).fill("Preparação antes da ativação");await provider.getByRole("button",{name:"Salvar cadastro",exact:true}).click();await provider.waitFor({state:"hidden"});
+      assert.equal(writes,1);assert.equal(current.version,null);assert.equal(promotions,0);
+      console.log("Central IA bootstrap OFF passou",width);return;
+    }
     if(owner){
       await page.getByRole("button",{name:"Biblioteca",exact:true}).click();await page.getByRole("button",{name:"Registrar tarifa",exact:true}).click();
       await choose("Modelo da tarifa","Candidato sintético · openai:candidate-test");
@@ -94,4 +101,4 @@ async function scenario(width,owner){
     console.log("Central IA browser passou",width,owner?"owner":"viewer");
   } finally {await context.close();await fixture.close();}
 }
-try {for(const width of [1440,390]){await scenario(width,true);await scenario(width,false);}} finally {await browser.close();}
+try {for(const width of [1440,390]){await scenario(width,true);await scenario(width,false);await scenario(width,true,false);}} finally {await browser.close();}

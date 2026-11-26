@@ -40,6 +40,7 @@ function Overview({data,canEdit,settings,reload,refreshCatalog}) {
   const saved=()=>{setBudget(null);reload();refreshCatalog();};
   return <>
     <DetailSection title="Custo e fila" meta="Mês atual em UTC" action={<Button variant="ghost" size="sm" onClick={reload}>Atualizar operação</Button>}>
+      <DetailText>{data.executionEnabled?"Execução por catálogo ativada.":"Execução por catálogo desligada. Os cadastros podem ser preparados antes da ativação."}</DetailText>
       {modes.length>0&&<Select label="Modo de execução dos custos" value={activeMode} onChange={setMode} options={modes.map(value=>({value,label:labels[value]||value}))} />}
       <StatTiles label="Operação do motor" items={[
         {id:"settled",label:"Custo liquidado USD",value:usdNumber(total("settledMicros"))},

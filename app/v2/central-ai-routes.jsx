@@ -10,6 +10,7 @@ import css from "./central-ai.module.css";
 
 function RouteEditor({stage,data,catalog,reload}) {
   const current=data.current, action=useV2Action();
+  const editing=catalog.canEdit&&catalog.executionEnabled===true;
   const [reserve,setReserve]=useState(current.reserve || ""), [shadow,setShadow]=useState(current.shadow || "");
   const [percent,setPercent]=useState(current.shadowPercent), [timeout,setTimeoutValue]=useState(current.timeoutMs/1000);
   const [reason,setReason]=useState(""), [promote,setPromote]=useState(false), [message,setMessage]=useState("");
@@ -25,20 +26,21 @@ function RouteEditor({stage,data,catalog,reload}) {
     <DetailSection title={stageLabels[stage]} meta={current.version?"Versão "+current.version:"Rota padrão herdada"}>
       <DetailRows items={[{label:"Modelo principal",value:current.principal},{label:"Reserva atual",value:current.reserve || "Nenhuma"}]} />
       {data.problem && <p role="status">Execução bloqueada pelo catálogo: {data.problem}.</p>}
+      {!catalog.executionEnabled&&<DetailText>A execução por catálogo está desligada. Cadastre e verifique as tarifas na Biblioteca; a implantação ativa a execução antes da alteração de rotas.</DetailText>}
       <DetailText>A sombra compara respostas sem substituir a principal. Seu custo tem um orçamento separado.</DetailText>
       <form className={css.form} onSubmit={event=>{
         event.preventDefault();setMessage("");
         action.run("staff/ai/routes/"+stage,"POST",body("set",{route:{reserve:reserve || null,shadow:shadow || null,shadowPercent:Number(percent),timeoutMs:Number(timeout)*1000}}),saved);
       }}>
-        <Select label="Modelo de reserva" searchable value={reserve} onChange={setReserve} disabled={!catalog.canEdit || action.pending} options={choices("reserve")} />
-        <Select label="Modelo em sombra" searchable value={shadow} onChange={setShadow} disabled={!catalog.canEdit || action.pending} options={choices("shadow")} />
-        <label>Percentual de sombra<Input type="number" min="0" max="100" step="1" required value={percent} disabled={!catalog.canEdit} onChange={event=>setPercent(event.target.value)} /></label>
-        <label>Prazo máximo em segundos<Input type="number" min="1" max="300" required value={timeout} disabled={!catalog.canEdit} onChange={event=>setTimeoutValue(event.target.value)} /></label>
-        {catalog.canEdit&&<><label>Motivo e avaliação de prazo e custo<Input required minLength={3} maxLength={500} value={reason} onChange={event=>setReason(event.target.value)} /></label>
+        <Select label="Modelo de reserva" searchable value={reserve} onChange={setReserve} disabled={!editing || action.pending} options={choices("reserve")} />
+        <Select label="Modelo em sombra" searchable value={shadow} onChange={setShadow} disabled={!editing || action.pending} options={choices("shadow")} />
+        <label>Percentual de sombra<Input type="number" min="0" max="100" step="1" required value={percent} disabled={!editing} onChange={event=>setPercent(event.target.value)} /></label>
+        <label>Prazo máximo em segundos<Input type="number" min="1" max="300" required value={timeout} disabled={!editing} onChange={event=>setTimeoutValue(event.target.value)} /></label>
+        {catalog.canEdit&&<><label>Motivo e avaliação de prazo e custo<Input required minLength={3} maxLength={500} value={reason} disabled={!editing} onChange={event=>setReason(event.target.value)} /></label>
           <div className={css.actions}>
-            <Button type="submit" disabled={action.pending}>Salvar reserva e sombra</Button>
-            <Button type="button" variant="secondary" disabled={action.pending || !current.shadow || reason.trim().length<3} onClick={()=>setPromote(true)}>Promover modelo avaliado</Button>
-            <Button type="button" variant="ghost" disabled={action.pending || current.version===null || reason.trim().length<3}
+            <Button type="submit" disabled={!editing || action.pending}>Salvar reserva e sombra</Button>
+            <Button type="button" variant="secondary" disabled={!editing || action.pending || !current.shadow || reason.trim().length<3} onClick={()=>setPromote(true)}>Promover modelo avaliado</Button>
+            <Button type="button" variant="ghost" disabled={!editing || action.pending || current.version===null || reason.trim().length<3}
               onClick={()=>action.run("staff/ai/routes/"+stage,"POST",body("rollback"),saved)}>Reverter última mudança</Button>
           </div></>}
       </form>
