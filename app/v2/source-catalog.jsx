@@ -14,10 +14,10 @@ function ConnectNowz({context,close,saved}) {
       event.preventDefault();const form=new FormData(event.currentTarget);
       action.run("sources/nowz","POST",{name:form.get("name").trim(),credentialRef:form.get("binding").trim(),channelIds:form.get("channels").split(/[\n,]+/).map(x=>x.trim()).filter(Boolean)},saved);
     }}>
-      <p>Use o vínculo e os canais da sua empresa já preparados pela implantação. A conexão será conferida antes de iniciar a importação.</p>
+      <p>Use o código de conexão e os canais autorizados da conta Nowz da sua empresa. A conexão será conferida antes de importar conversas.</p>
       <label>Nome da conexão<Input name="name" required minLength={2} maxLength={60} /></label>
-      <label>Identificador do vínculo preparado<Input name="binding" required maxLength={100} /></label>
-      <label>Identificadores dos canais<Textarea aria-label="Identificadores dos canais" name="channels" required rows={4} placeholder="Um canal por linha" /></label>
+      <label>Código de conexão<Input name="binding" required maxLength={100} /></label>
+      <label>Canais da conta Nowz<Textarea aria-label="Canais da conta Nowz" name="channels" required rows={4} placeholder="Um código de canal por linha" /></label>
       <p>Esta integração importa conversas. O envio de mensagens por Nowz ainda não está disponível.</p>
       {action.error&&<p role="alert">{action.error}</p>}
       <Button type="submit" disabled={action.pending}>Conferir e conectar Nowz</Button>
@@ -31,8 +31,8 @@ export function SourceCatalog({context,session}) {
     <ReadState read={read}>{data=><>
       {data.providers.filter(p=>p.id!=="evolution").map(provider=><section key={provider.id} aria-label={names[provider.id]||provider.id}>
         <h3>{names[provider.id]||provider.id}</h3>
-        <p>{provider.available===false?"Conexão em avaliação. A importação será liberada após a validação da integração.":"Importação de conversas com cobertura do histórico acompanhada por conexão."}</p>
-        {provider.id==="nowz"&&provider.available!==false&&session.workspace.role==="manager"&&<Button variant="secondary" size="sm" onClick={()=>setConnecting(true)}>Conectar Nowz</Button>}
+        <p>{provider.reason==="setup_required"?"Solicite a conexão da sua conta Nowz.":provider.available!==true?"Conexão em avaliação. A importação será liberada após a validação da integração.":"Importação de conversas com cobertura do histórico acompanhada por conexão."}</p>
+        {provider.id==="nowz"&&provider.available===true&&session.workspace.role==="manager"&&<Button variant="secondary" size="sm" onClick={()=>setConnecting(true)}>Conectar Nowz</Button>}
       </section>)}
       {data.items.map((item,i)=><DetailRows key={item.connection_id} items={[
         {label:"Conexão "+(i+1),value:names[item.provider]||item.provider},
